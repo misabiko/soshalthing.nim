@@ -20,5 +20,13 @@ proc timeline*(self: Timeline): VNode =
     result = buildHtml(tdiv(class = "timeline")):
         tdiv(class = "timelineHeader"):
             strong: text self.name
+
+            tdiv(class="timelineButtons"):
+                button(class="refreshTimeline"):
+                    span(class="icon"):
+                        italic(class="fas fa-lg fa-sync-alt")
+                button(class="openTimelineOptions"):
+                    span(class="icon"):
+                        italic(class="fas fa-lg fa-ellipsis-v")
         
-        vmap(self.articles, tdiv, self.article)
+        vmap(self.articles, tdiv(class="timelineArticles"), self.article)

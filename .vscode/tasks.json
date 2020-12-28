@@ -8,7 +8,7 @@
             "command": "karun.cmd",
             "args": [
                 "-r",
-                "--css:../src/css.html",
+                "--css:../src/head.html",
                 "../src/soshalthing.nim"
             ],
             "options": {
@@ -27,7 +27,7 @@
             "args": [
                 "-r",
                 "-w",
-                "--css:../src/css.html",
+                "--css:../src/head.html",
                 "../src/soshalthing.nim"
             ],
             "options": {
