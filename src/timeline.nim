@@ -1,14 +1,24 @@
-include karax / prelude
-import twitter/article
+import karax / [karax, karaxdsl, vdom, reactive], service
 
 type
     Timeline* = object
         name*: string
-        articles*: seq[string]
+        articles*: RSeq[string]
+        service*: ServiceInfo
+
+proc newTimeline*(name: string, service: ServiceInfo): Timeline =
+    result = Timeline(name: name, service: service)
+    result.articles = newRSeq[string]()
+
+proc article(self: Timeline, id: string): VNode = self.service.toVNode(id)
+
+proc refresh*(self: Timeline) =
+    var a = self.articles
+    discard self.service.refresh(a)
 
 proc timeline*(self: Timeline): VNode =
     result = buildHtml(tdiv(class = "timeline")):
         tdiv(class = "timelineHeader"):
             strong: text self.name
-        for i in self.articles:
-            i.article()
+        
+        vmap(self.articles, tdiv, self.article)

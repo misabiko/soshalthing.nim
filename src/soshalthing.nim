@@ -1,8 +1,7 @@
-include karax / prelude
-import dom, timeline, twitter/service
+import karax/[karax, vdom, karaxdsl], dom, timeline, twitter/service
 
-let t = Timeline(name: "Home", articles: @["0", "1", "2"])
-discard getHomeTimeline()
+let t = newTimeline("Home", TwitterService)
+t.refresh()
 
 proc createDom(): VNode =
     result = buildHtml(tdiv):
@@ -11,7 +10,5 @@ proc createDom(): VNode =
 setRenderer createDom
 
 
-# TODO Request home timeline
-# TODO Render tweet VNode
-# TODO Prune preludes
 # TODO Obey the nimble gods
+# TODO Serve css with right MIME

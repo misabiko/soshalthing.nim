@@ -87,3 +87,41 @@ $colors: ("white": ($white, $black), "black": ($black, $white),	"light": ($light
 
 	&.timelineInvalid
 		background-color: $dark-error
+
+article.article
+	padding: 1rem
+	background-color: $scheme-main-bis
+	margin-bottom: 2px
+
+	figure img
+		border-radius: 4px
+
+.postMedia
+	margin-top: 1rem
+
+.articleHeader *
+	vertical-align: middle
+
+	small
+		color: $light
+
+.names
+	text-overflow: ellipsis
+	white-space: nowrap
+	overflow: hidden
+	display: inline-block
+	max-width: 300px
+
+	strong
+		margin-right: 0.5rem
+		color: $white-ter
+
+	&:hover > *
+		text-decoration: underline
+
+.timestamp
+	float: right
+
+p.articleParagraph
+	white-space: pre-line
+	overflow-wrap: anywhere

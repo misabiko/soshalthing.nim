@@ -1,4 +1,5 @@
-import fetch, asyncjs, json, sequtils, options, tweet
+import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, article
+import ../service
 
 type
     TimelinePayload = object
@@ -20,7 +21,11 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
             result.quotes.add(parsed.quote.get())
         #else:
 
-proc getHomeTimeline*() {.async.} =
+proc getHomeTimeline*(articles: var RSeq[string]) {.async.} =
     let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
     let payload = parseTweets(tweets)
-    echo payload.posts[0].text
+    for p in payload.posts:
+        p.addArticle()
+        articles.add(p.id)
+
+let TwitterService* = ServiceInfo(toVNode: article.toVNode, refresh: getHomeTimeline)

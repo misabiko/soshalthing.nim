@@ -1,17 +1,23 @@
-include karax / prelude
-import tables, ../article
+import karax/[vdom, karaxdsl], tables, ../article, tweet
 
-type
-    TweetData* = object of ArticleData
-        text: string
+var datas* = initOrderedTable[string, Post]()
 
-var datas* = initOrderedTable[string, TweetData]()
+proc addArticle*(a: Post) = datas[a.id] = a
 
-datas["0"] = TweetData(text: "boop")
-datas["1"] = TweetData(text: "beep")
-datas["2"] = TweetData(text: "bap")
-
-proc article*(id: string): VNode =
+proc toVNode*(id: string): VNode =
     let data = datas[id]
-    result = buildHtml(article):
-        text data.text
+    result = buildHtml(article(class = "article")):
+        tdiv(class = "media"):
+            figure(class="media-left"):
+                p(class="image is-64x64"):
+                    img(alt=data.authorHandle & "'s avatar", src=data.authorAvatar)
+            tdiv(class="media-content"):
+                tdiv(class="content"):
+                    tdiv(class="articleHeader"):
+                        a(class="names"):
+                            strong: text data.authorName
+                            small: text "@" & data.authorHandle
+                        span(class="timestamp"):
+                            small: text "10m"
+                    tdiv(class="tweet-paragraph"):
+                        text data.text
