@@ -1,0 +1,39 @@
+@use 'core' as *
+
+.timeline
+	@include pretty-scrollbar
+
+	color: $text
+	height: 100%
+	width: 500px
+	padding: 0 5px
+	box-sizing: border-box
+	display: flex
+	flex-flow: column
+
+.timelineHeader
+	height: 50px
+	line-height: 50px
+	padding-left: 25px
+	background-color: $dark
+	display: flex
+	justify-content: space-between
+
+	strong
+		vertical-align: middle
+
+	&.timelineInvalid
+		background-color: $dark-error
+
+	& .icon i
+		color: $white-ter
+
+.timelineButtons > button
+	@include borderless-button(0 1.6rem)
+	height: 100%
+
+.timelineArticles
+	overflow-y: scroll
+	overflow-x: hidden
+	flex-grow: 1
+	height: 100%

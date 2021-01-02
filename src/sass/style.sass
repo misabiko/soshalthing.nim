@@ -1,0 +1,80 @@
+@use 'core'
+@use 'timeline'
+@import "bulma.sass"
+@charset "utf-8";
+
+
+.icon i
+	color: $white-ter
+
+html
+	overflow-y: hidden
+
+body
+	margin: 0
+
+#ROOT
+	height: 100vh
+	display: flex
+	-webkit-font-smoothing: antialiased
+	-moz-osx-font-smoothing: grayscale
+
+#timelineContainer
+	@include pretty-scrollbar
+
+	height: 100%
+	overflow-x: scroll
+	overflow-y: hidden
+	display: flex
+	flex-grow: 1
+
+.bottomLoader
+	position: relative
+
+.bottomLoader > .loading-overlay
+	height: 100px
+	border-radius: 0 0 8px 8px
+
+.slow-spin
+	animation: fa-spin 6s infinite linear
+
+.autoScrollInput
+	width: 80px
+
+article.article
+	padding: 1rem
+	background-color: $scheme-main-bis
+	margin-bottom: 2px
+
+	figure img
+		border-radius: 4px
+
+.postMedia
+	margin-top: 1rem
+
+.articleHeader *
+	vertical-align: middle
+
+	small
+		color: $light
+
+.names
+	text-overflow: ellipsis
+	white-space: nowrap
+	overflow: hidden
+	display: inline-block
+	max-width: 300px
+
+	strong
+		margin-right: 0.5rem
+		color: $white-ter
+
+	&:hover > *
+		text-decoration: underline
+
+.timestamp
+	float: right
+
+p.articleParagraph
+	white-space: pre-line
+	overflow-wrap: anywhere
