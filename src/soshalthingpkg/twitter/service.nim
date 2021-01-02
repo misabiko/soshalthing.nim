@@ -19,7 +19,6 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
             result.reposts.add(parsed.repost.get())
         elif parsed.quote.isSome:
             result.quotes.add(parsed.quote.get())
-        #else:
 
 proc getHomeTimeline*(articles: var RSeq[string]) {.async.} =
     let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
