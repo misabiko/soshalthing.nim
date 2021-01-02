@@ -5,14 +5,12 @@
     "tasks": [
         {
             "label": "Karun",
-            "command": "karun.cmd",
+            "command": "nimble",
             "args": [
-                "-r",
-                "--css:../src/head.html",
-                "../src/soshalthing.nim"
+                "karun"
             ],
             "options": {
-                "cwd": "${workspaceRoot}/bin"
+                "cwd": "${workspaceRoot}"
             },
             "type": "shell",
             "group": {
@@ -23,15 +21,12 @@
         },
         {
             "label": "Kawatch",
-            "command": "karun.cmd",
+            "command": "nimble",
             "args": [
-                "-r",
-                "-w",
-                "--css:../src/head.html",
-                "../src/soshalthing.nim"
+                "kawatch"
             ],
             "options": {
-                "cwd": "${workspaceRoot}/bin"
+                "cwd": "${workspaceRoot}"
             },
             "type": "shell",
             "group": "build",
