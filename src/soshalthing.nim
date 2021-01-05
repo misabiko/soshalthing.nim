@@ -1,13 +1,13 @@
 when defined(js):
     import karax/[karax, vdom, karaxdsl], dom
-    import soshalthingpkg / [timeline, twitter/service]
+    import soshalthingpkg / [timeline, sidebar, twitter/service]
 
     var timelines: seq[Timeline]
     timelines.add newTimeline("Home", TwitterService)
 
     proc createDom(): VNode =
         result = buildHtml(tdiv):
-            tdiv(id="sidebar")
+            sidebar()
             tdiv(id="timelineContainer"):
                 for t in timelines:
                     t.timeline()
