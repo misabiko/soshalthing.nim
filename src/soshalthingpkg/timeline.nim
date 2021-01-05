@@ -1,4 +1,5 @@
-import karax / [karax, karaxdsl, vdom, reactive], service, algorithm, times
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs
+import service
 
 type
     ArticlesContainer* = proc(self: Timeline): VNode
@@ -22,14 +23,15 @@ proc basicSortedContainer*(self: Timeline): VNode =
         for i in copy:
             self.article i
 
-proc refresh*(self: Timeline) =
+proc refresh*(self: Timeline) {.async.} =
     var a = self.articles
+    await self.service.refresh a
+    redraw()
     echo "Refreshing " & self.name & " - " & $a.len & " articles"
-    discard self.service.refresh(a)
 
 proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContainer = basicContainer): Timeline =
     result = Timeline(name: name, articles: newRSeq[string](), service: service, container: container)
-    result.refresh()
+    discard result.refresh()
 
 proc timeline*(self: Timeline, class = "timeline"): VNode =
     result = buildHtml(section(class = class)):
@@ -41,7 +43,7 @@ proc timeline*(self: Timeline, class = "timeline"): VNode =
                     span(class="icon"):
                         italic(class="fas fa-lg fa-sync-alt")
 
-                    proc onclick() = self.refresh()
+                    proc onclick() = discard self.refresh()
                 button(class="openTimelineOptions"):
                     span(class="icon"):
                         italic(class="fas fa-lg fa-ellipsis-v")
