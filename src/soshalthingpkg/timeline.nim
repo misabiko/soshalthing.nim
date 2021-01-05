@@ -23,8 +23,8 @@ proc basicSortedContainer*(self: Timeline): VNode =
             self.article i
 
 proc refresh*(self: Timeline) =
-    echo "Refreshing " & self.name
     var a = self.articles
+    echo "Refreshing " & self.name & " - " & $a.len & " articles"
     discard self.service.refresh(a)
 
 proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContainer = basicContainer): Timeline =

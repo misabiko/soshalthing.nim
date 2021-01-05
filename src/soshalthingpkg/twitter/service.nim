@@ -25,8 +25,11 @@ proc getHomeTimeline*(articles: var RSeq[string]) {.async.} =
     let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
     let payload = parseTweets(tweets)
     for p in payload.posts:
-        p.addArticle()
-        articles.add(p.id)
+        if not datas.hasKey(p.id):
+            p.addArticle()
+            articles.add(p.id)
+        else:
+            p.addArticle()
 
 proc getData(id: string): ArticleData = datas[id].ArticleData
 
