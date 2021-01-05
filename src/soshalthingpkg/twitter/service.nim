@@ -1,5 +1,6 @@
-import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, article
+import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, article, tables
 import ../service
+from ../article  as ba import ArticleData
 
 type
     TimelinePayload = object
@@ -27,4 +28,6 @@ proc getHomeTimeline*(articles: var RSeq[string]) {.async.} =
         p.addArticle()
         articles.add(p.id)
 
-let TwitterService* = ServiceInfo(toVNode: article.toVNode, refresh: getHomeTimeline)
+proc getData(id: string): ArticleData = datas[id].ArticleData
+
+let TwitterService* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getHomeTimeline)

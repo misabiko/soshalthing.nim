@@ -1,8 +1,8 @@
-import karax / vdom
+import karax / vdom, times
 
 type
     ArticleData* = object of RootObj
         id*: string
-        creationTime*: string
+        creationTime*: DateTime
     Article* = ref object of VNode
         articleId*: string

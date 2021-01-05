@@ -3,7 +3,7 @@ when defined(js):
     import soshalthingpkg / [timeline, sidebar, twitter/service]
 
     var timelines: seq[Timeline]
-    timelines.add newTimeline("Home", TwitterService)
+    timelines.add newTimeline("Home", TwitterService, container = basicSortedContainer)
 
     proc createDom(): VNode =
         result = buildHtml(tdiv):

@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], service
+import karax / [karax, karaxdsl, vdom, reactive], service, algorithm, times
 
 type
     ArticlesContainer* = proc(self: Timeline): VNode
@@ -12,6 +12,15 @@ proc article(self: Timeline, id: string): VNode = self.service.toVNode(id)
 
 proc basicContainer(self: Timeline): VNode =
     vmap(self.articles, tdiv(class="timelineArticles"), self.article)
+
+proc basicSortedContainer*(self: Timeline): VNode =
+    var copy: seq[string]
+    for i in 0..<len(self.articles):
+        copy.add(self.articles[i])
+    copy.sort(proc(x, y: string): int = cmp(self.service.getData(y).creationTime, self.service.getData(x).creationTime))
+    result = buildHtml(tdiv(class="timelineArticles")):
+        for i in copy:
+            self.article i
 
 proc refresh*(self: Timeline) =
     echo "Refreshing " & self.name

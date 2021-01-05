@@ -1,4 +1,4 @@
-import json, options, ../article
+import json, options, times, ../article
 
 type
     Post* = object of ArticleData
@@ -23,12 +23,15 @@ type
     Quote* = object of Post
         quotedId*: string
 
+#Tue Aug 18 00:00:00 +0000 2020
+const tweetTimeFormat = initTimeFormat("ddd MMM dd HH:mm:ss zz'00' YYYY")
+
 proc toPost(tweet: JsonNode): Post =
     let user = tweet["user"]
 
     result = Post(
         id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr(),
+        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
         authorName: user["name"].getStr(),
         authorHandle: user["screen_name"].getStr(),
         authorAvatar: user["profile_image_url_https"].getStr(),
@@ -50,7 +53,7 @@ proc toRepost(tweet: JsonNode): Repost =
 
     result = Repost(
         id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr(),
+        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
         repostedId: tweet["retweeted_status"]["id_str"].getStr(),
         reposterName: user["name"].getStr(),
         reposterHandle: user["screen_name"].getStr(),
@@ -62,7 +65,7 @@ proc toQuote(tweet: JsonNode): Quote =
 
     result = Quote(
         id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr(),
+        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
         authorName: user["name"].getStr(),
         authorHandle: user["screen_name"].getStr(),
         authorAvatar: user["profile_image_url_https"].getStr(),

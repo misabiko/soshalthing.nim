@@ -1,8 +1,24 @@
-import karax/[vdom, karaxdsl], tables, ../article, tweet
+import karax/[vdom, karaxdsl], tables, times
+import ../article, tweet
 
 var datas* = initOrderedTable[string, Post]()
 
 proc addArticle*(a: Post) = datas[a.id] = a
+
+proc toTimestampStr(dt: DateTime): string =
+    let n = now()
+    let interval = between(dt, now())
+    let parts = interval.toParts
+    if n.year != dt.year:
+        return dt.format("d MMM YYYY")
+    if parts[Days] > 0:
+        return $parts[Days] & "d"
+    if parts[Hours] > 0:
+        return $parts[Hours] & "h"
+    if parts[Minutes] > 0:
+        return $parts[Minutes] & "m"
+    if parts[Seconds] > 0:
+        return $parts[Seconds] & "s"
 
 proc toVNode*(id: string): VNode =
     let data = datas[id]
@@ -18,6 +34,6 @@ proc toVNode*(id: string): VNode =
                             strong: text data.authorName
                             small: text "@" & data.authorHandle
                         span(class="timestamp"):
-                            small: text "10m"
+                            small: text data.creationTime.toTimestampStr
                     tdiv(class="tweet-paragraph"):
                         text data.text
