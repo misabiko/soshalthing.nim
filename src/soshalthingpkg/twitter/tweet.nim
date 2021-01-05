@@ -66,7 +66,7 @@ proc toQuote(tweet: JsonNode): Quote =
         authorName: user["name"].getStr(),
         authorHandle: user["screen_name"].getStr(),
         authorAvatar: user["profile_image_url_https"].getStr(),
-        text: tweet["full_text"].getStr(),
+        text: tweet["text"].getStr(),
         #images,
         #video,
         liked: tweet["favorited"].getBool(),
