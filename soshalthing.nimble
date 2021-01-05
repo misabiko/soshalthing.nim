@@ -18,11 +18,11 @@ task proxy, "Launches the twitter proxy":
 
 task karun, "Launch with karun":
     withDir("bin"):
-        exec "karun.cmd -r --css:../src/head.html --out:soshalthing.js ../src/soshalthing.nim"
+        exec "karun.cmd -r --css:../src/head.html ../src/soshalthing.nim"
 
 task kawatch, "Launch in watch mode with karun":
     withDir("bin"):
-        exec "karun.cmd -r -w --css:../src/head.html --out:soshalthing.js ../src/soshalthing.nim"
+        exec "karun.cmd -r -w --css:../src/head.html ../src/soshalthing.nim"
 
 task userscript, "Build a userscript file":
     discard
