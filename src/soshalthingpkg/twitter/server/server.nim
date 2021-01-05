@@ -1,4 +1,4 @@
-import twitter, httpclient, jester, json, sequtils, options
+import twitter, httpclient, jester, json
 
 let credentials = parseFile("credentials.json")
 
@@ -7,7 +7,7 @@ var twitterAPI = newTwitterAPI(consumerToken, credentials["access_key"].str, cre
 
 # Simply get.
 var resp = twitterAPI.get("account/verify_credentials.json")
-echo resp.status
+echo "Twitter credenditals status: " & resp.status
 
 
 routes:
