@@ -32,7 +32,7 @@ proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContain
     result.refresh()
 
 proc timeline*(self: Timeline, class = "timeline"): VNode =
-    result = buildHtml(tdiv(class = class)):
+    result = buildHtml(section(class = class)):
         tdiv(class = "timelineHeader"):
             strong: text self.name
 
@@ -49,4 +49,3 @@ proc timeline*(self: Timeline, class = "timeline"): VNode =
         self.container(self)
 
 # TODO Clicking head button move individually
-# TODO Set timeline to section
