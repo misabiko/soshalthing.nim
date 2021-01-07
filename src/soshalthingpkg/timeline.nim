@@ -2,19 +2,20 @@ import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs
 import service
 
 type
-    ArticlesContainer* = proc(self: Timeline): VNode
+    ArticlesContainer* = proc(self: var Timeline): VNode
     Timeline* = object
         name*: string
         articles*: RSeq[string]
         service*: ServiceInfo
         container*: ArticlesContainer
+        needTop*, needBottom*: bool
 
 proc article(self: Timeline, id: string): VNode = self.service.toVNode(id)
 
-proc basicContainer(self: Timeline): VNode =
+proc basicContainer(self: var Timeline): VNode =
     vmap(self.articles, tdiv(class="timelineArticles"), self.article)
 
-proc basicSortedContainer*(self: Timeline): VNode =
+proc basicSortedContainer*(self: var Timeline): VNode =
     var copy: seq[string]
     for i in 0..<len(self.articles):
         copy.add(self.articles[i])
@@ -33,10 +34,10 @@ proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContain
     result = Timeline(name: name, articles: newRSeq[string](), service: service, container: container)
     discard result.refresh()
 
-proc timeline*(self: Timeline, class = "timeline"): VNode =
+proc timeline*(self: var Timeline, class = "timeline"): VNode =
     result = buildHtml(section(class = class)):
         tdiv(class = "timelineHeader"):
-            strong: text self.name
+            strong: text self.name & " " & $self.needTop & " " & $self.needBottom
 
             tdiv(class="timelineButtons"):
                 button(class="refreshTimeline"):
