@@ -1,4 +1,5 @@
-import json, options, times, ../article
+import json, options, times, sequtils, tables
+import ../article
 
 type
     Post* = object of ArticleData
@@ -6,7 +7,7 @@ type
         authorHandle*: string
         authorAvatar*: string
         text*: string
-        #images*: PostImageData[] #Nullable
+        images*: seq[PostImageData]
         #video*: PostVideoData #Nullable
         liked*: bool
         reposted*: bool
@@ -22,26 +23,60 @@ type
         reposterAvatar*: string
     Quote* = object of Post
         quotedId*: string
+    #ImageSize = object
+    #    w, h: int
+    #    resize: string
+    PostImageData* = object
+        url*: string
+        sizes*: JsonNode
+        indices*: tuple[first: int, second: int]
+    PostVideoData = object
+    Entities = object
+        images: seq[PostImageData]
+        video: PostVideoData
+        #userMentions : UserMentionData[]
+        #hashtags : HashtagData[]
+        #externalLinks : ExternalLinkData[]
 
 #Tue Aug 18 00:00:00 +0000 2020
 const tweetTimeFormat = initTimeFormat("ddd MMM dd HH:mm:ss zz'00' YYYY")
 
+proc newImageData(media: JsonNode): PostImageData =
+    result.url = media["media_url_https"].str
+    result.sizes = media["sizes"]
+    let rawIndices = media["indices"]
+    result.indices = (first: rawIndices[0].num.int, second: rawIndices[1].num.int)
+
+proc parseEntities(tweet: JsonNode): Entities =
+    if tweet.hasKey("extended_entities"):
+        let medias = tweet["extended_entities"]{"media"}
+
+        if medias != nil:
+            case medias[0]["type"].str:
+                of "photo":
+                    result.images = medias.getElems().map newImageData
+                        
+    elif tweet.hasKey("entities") and tweet["entities"].hasKey("media"):
+        result.images = @[tweet["entities"]["media"][0].newImageData]
+
+
 proc toPost(tweet: JsonNode): Post =
     let user = tweet["user"]
+    let entities = tweet.parseEntities()
 
     result = Post(
-        id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
-        authorName: user["name"].getStr(),
-        authorHandle: user["screen_name"].getStr(),
-        authorAvatar: user["profile_image_url_https"].getStr(),
-        text: if tweet.hasKey("full_text"): tweet["full_text"].getStr() else: tweet["text"].getStr(),
-        #images,
+        id: tweet["id_str"].str,
+        creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        authorName: user["name"].str,
+        authorHandle: user["screen_name"].str,
+        authorAvatar: user["profile_image_url_https"].str,
+        text: if tweet.hasKey("full_text"): tweet["full_text"].str else: tweet["text"].str,
+        images: entities.images,
         #video,
-        liked: tweet["favorited"].getBool(),
-        reposted: tweet["retweeted"].getBool(),
-        likeCount: tweet["favorite_count"].getInt(),
-        repostCount: tweet["retweet_count"].getInt(),
+        liked: tweet["favorited"].bval,
+        reposted: tweet["retweeted"].bval,
+        likeCount: tweet["favorite_count"].num.int,
+        repostCount: tweet["retweet_count"].num.int,
         #userMentions,
         #hashtags,
         #externalLinks,
@@ -52,34 +87,34 @@ proc toRepost(tweet: JsonNode): Repost =
     let user = tweet["user"]
 
     result = Repost(
-        id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
-        repostedId: tweet["retweeted_status"]["id_str"].getStr(),
-        reposterName: user["name"].getStr(),
-        reposterHandle: user["screen_name"].getStr(),
-        reposterAvatar: user["profile_image_url_https"].getStr(),
+        id: tweet["id_str"].str,
+        creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        repostedId: tweet["retweeted_status"]["id_str"].str,
+        reposterName: user["name"].str,
+        reposterHandle: user["screen_name"].str,
+        reposterAvatar: user["profile_image_url_https"].str,
     )
 
 proc toQuote(tweet: JsonNode): Quote =
     let user = tweet["user"]
 
     result = Quote(
-        id: tweet["id_str"].getStr(),
-        creationTime: tweet["created_at"].getStr().parse(tweetTimeFormat),
-        authorName: user["name"].getStr(),
-        authorHandle: user["screen_name"].getStr(),
-        authorAvatar: user["profile_image_url_https"].getStr(),
-        text: tweet["text"].getStr(),
+        id: tweet["id_str"].str,
+        creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        authorName: user["name"].str,
+        authorHandle: user["screen_name"].str,
+        authorAvatar: user["profile_image_url_https"].str,
+        text: tweet["text"].str,
         #images,
         #video,
-        liked: tweet["favorited"].getBool(),
-        reposted: tweet["retweeted"].getBool(),
-        likeCount: tweet["favorite_count"].getInt(),
-        repostCount: tweet["retweet_count"].getInt(),
+        liked: tweet["favorited"].bval,
+        reposted: tweet["retweeted"].bval,
+        likeCount: tweet["favorite_count"].num.int,
+        repostCount: tweet["retweet_count"].num.int,
         #userMentions,
         #hashtags,
         #externalLinks,
-        quotedId: tweet["quoted_status"]["id_str"].getStr(),
+        quotedId: tweet["quoted_status"]["id_str"].str,
     )
 
 proc parseTweet*(tweet: JsonNode): tuple[post: Post, repost: Option[Repost], quote: Option[Quote]] =

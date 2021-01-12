@@ -37,3 +37,8 @@ proc toVNode*(id: string): VNode =
                             small: text data.creationTime.toTimestampStr
                     tdiv(class="tweet-paragraph"):
                         text data.text
+        tdiv(class = "postImages"):
+            for i in data.images:
+                tdiv(class = "mediaHolder"):
+                    tdiv(class = "is-hidden imgPlaceholder")
+                    img(src = i.url)
