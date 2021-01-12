@@ -31,6 +31,17 @@ proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
         else:
             p.addArticle()
 
+proc getUserMedia*(articles: var RSeq[string], bottom = false) {.async.} =
+    let tweets = await fetch("http://127.0.0.1:5000/user_timeline").toJsonNode()
+    let payload = parseTweets(tweets)
+    for p in payload.posts:
+        if not datas.hasKey(p.id):
+            p.addArticle()
+            articles.add(p.id)
+        else:
+            p.addArticle()
+
 proc getData(id: string): ArticleData = datas[id].ArticleData
 
 let TwitterService* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getHomeTimeline)
+let TwitterService2* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getUserMedia)

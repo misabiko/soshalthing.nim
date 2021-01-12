@@ -4,6 +4,7 @@ when defined(js):
 
     var timelines: seq[Timeline]
     timelines.add newTimeline("Home", TwitterService, container = basicSortedContainer)
+    timelines.add newTimeline("User", TwitterService2, container = basicSortedContainer)
 
     proc createDom(): VNode =
         result = buildHtml(tdiv):
