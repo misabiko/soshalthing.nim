@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat
 import service
 
 type
@@ -8,7 +8,8 @@ type
         articles*: RSeq[string]
         service*: ServiceInfo
         container*: ArticlesContainer
-        needTop*, needBottom*: bool
+        infiniteLoad*: bool
+        needTop*, needBottom*, loadingTop*, loadingBottom*: bool
 
 proc article(self: Timeline, id: string): VNode = self.service.toVNode(id)
 
@@ -24,20 +25,42 @@ proc basicSortedContainer*(self: var Timeline): VNode =
         for i in copy:
             self.article i
 
-proc refresh*(self: Timeline) {.async.} =
+proc refresh*(self: Timeline, bottom = true) {.async.} =
     var a = self.articles
-    await self.service.refresh a
+    await self.service.refresh(a, bottom)
     redraw()
-    echo "Refreshing " & self.name & " - " & $a.len & " articles"
+    let direction = if bottom:
+        "bottom"
+    else:
+        "top"
+    echo &"Refreshed {self.name} {direction} - {$a.len} articles"
+
+proc refillTop*(self: var Timeline) {.async.} =
+    if self.loadingTop:
+        return
+    
+    self.loadingTop = true
+    echo &"Refilling {self.name} top"
+    await self.refresh(false)
+    self.loadingTop = false
+
+proc refillBottom*(self: var Timeline) {.async.} =
+    if self.loadingBottom:
+        return
+    
+    self.loadingBottom = true
+    echo &"Refilling {self.name} bottom"
+    await self.refresh()
+    self.loadingBottom = false
 
 proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContainer = basicContainer): Timeline =
-    result = Timeline(name: name, articles: newRSeq[string](), service: service, container: container)
+    result = Timeline(name: name, articles: newRSeq[string](), service: service, container: container, needTop: true)
     discard result.refresh()
 
 proc timeline*(self: var Timeline, class = "timeline"): VNode =
     result = buildHtml(section(class = class)):
         tdiv(class = "timelineHeader"):
-            strong: text self.name & " " & $self.needTop & " " & $self.needBottom
+            strong: text self.name
 
             tdiv(class="timelineButtons"):
                 button(class="refreshTimeline"):

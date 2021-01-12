@@ -9,7 +9,7 @@ when defined(js):
         result = buildHtml(tdiv):
             sidebar()
             tdiv(id="timelineContainer"):
-                for t in timelines:
+                for t in timelines.mitems:
                     t.timeline()
 
     setRenderer createDom
