@@ -1,4 +1,4 @@
-import json, options, times, sequtils
+import json, options, times, sequtils, strutils
 import ../article
 
 type
@@ -27,25 +27,35 @@ type
     #    w, h: int
     #    resize: string
     PostImageData* = object
-        url*: string
+        url*, compressed_url: string
         sizes*: JsonNode
         indices*: tuple[first: int, second: int]
     PostVideoData = object
+        compressed_url: string
+    PostURLData = object
+        compressed, expanded, display: string
     Entities = object
         images: seq[PostImageData]
         video: PostVideoData
         #userMentions : UserMentionData[]
         #hashtags : HashtagData[]
         #externalLinks : ExternalLinkData[]
+        urls: seq[PostURLData]
 
 #Tue Aug 18 00:00:00 +0000 2020
 const tweetTimeFormat = initTimeFormat("ddd MMM dd HH:mm:ss zz'00' YYYY")
 
 proc newImageData(media: JsonNode): PostImageData =
+    result.compressed_url = media["url"].str
     result.url = media["media_url_https"].str
     result.sizes = media["sizes"]
     let rawIndices = media["indices"]
     result.indices = (first: rawIndices[0].num.int, second: rawIndices[1].num.int)
+
+proc newURLData(url: JsonNode): PostURLData =
+    result.compressed = url["url"].str
+    result.expanded = url["expanded_url"].str
+    result.display = url["display_url"].str
 
 proc parseEntities(tweet: JsonNode): Entities =
     if tweet.hasKey("extended_entities"):
@@ -55,15 +65,32 @@ proc parseEntities(tweet: JsonNode): Entities =
             case medias[0]["type"].str:
                 of "photo":
                     result.images = medias.getElems().map newImageData
-                        
-    elif tweet.hasKey("entities") and tweet["entities"].hasKey("media"):
-        result.images = @[tweet["entities"]["media"][0].newImageData]
 
-proc getText(tweet: JsonNode): string =
+        if tweet["extended_entities"].hasKey("urls"):
+            result.urls = tweet["extended_entities"]["urls"].getElems().map newURLData
+    elif tweet.hasKey("entities"):
+        if tweet["entities"].hasKey("media"):
+            result.images = @[tweet["entities"]["media"][0].newImageData]
+
+        if tweet["entities"].hasKey("urls"):
+            result.urls = tweet["entities"]["urls"].getElems().map newURLData
+
+proc getText(tweet: JsonNode, entities: Entities): string =
     if tweet.hasKey("full_text"):
-        tweet["full_text"].str
+        result = tweet["full_text"].str
     else:
-        tweet["text"].str
+        result = tweet["text"].str
+
+    for i in entities.images:
+        result = result.replace(i.compressed_url)
+
+    #if entities.video != nil:
+    #    result = result.replace(entities.video.compressed_url)
+
+    for i in entities.urls:
+        result = result.replace(i.compressed, i.display)
+
+    result = result.strip()
 
 proc toPost(tweet: JsonNode): Post =
     let user = tweet["user"]
@@ -75,7 +102,7 @@ proc toPost(tweet: JsonNode): Post =
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
-        text: tweet.getText(),
+        text: tweet.getText(entities),
         images: entities.images,
         #video,
         liked: tweet["favorited"].bval,
@@ -102,6 +129,7 @@ proc toRepost(tweet: JsonNode): Repost =
 
 proc toQuote(tweet: JsonNode): Quote =
     let user = tweet["user"]
+    let entities = tweet.parseEntities()
 
     result = Quote(
         id: tweet["id_str"].str,
@@ -109,7 +137,7 @@ proc toQuote(tweet: JsonNode): Quote =
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
-        text: tweet.getText(),
+        text: tweet.getText(entities),
         #images,
         #video,
         liked: tweet["favorited"].bval,
