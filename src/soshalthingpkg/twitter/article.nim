@@ -1,4 +1,4 @@
-import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json
+import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options
 import ../article, tweet, fetch
 
 var datas* = initOrderedTable[string, ArticleData]()
@@ -58,13 +58,10 @@ method getPost(article: Post): Post =
 method getPost(article: Repost): Post =
     return datas[article.repostedId].Post
 
-proc toVNode*(id: string): VNode =
-    var data = datas[id]
-    echo data.repr
-    let post = data.getPost()
-    echo post.repr
+proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], footer: Option[VNode]): VNode =
+    return buildHtml(article(class = "article")):
+        if aHeader.isSome: aHeader.get()
 
-    result = buildHtml(article(class = "article")):
         tdiv(class = "media"):
             figure(class="media-left"):
                 p(class="image is-64x64"):
@@ -79,11 +76,20 @@ proc toVNode*(id: string): VNode =
                             small: text post.creationTime.toTimestampStr
                     tdiv(class="tweet-paragraph"):
                         text post.text
+                if extra.isSome: extra.get()
                 buttons(post)
-        tdiv(class = "postImages postMedia"):
-            for i in post.images:
-                tdiv(class = "mediaHolder"):
-                    tdiv(class = "is-hidden imgPlaceholder")
-                    img(src = i.url)
+        if footer.isSome: footer.get()
+
+proc toVNode*(id: string): VNode =
+    var data = datas[id]
+    let post = data.getPost()
+
+    let footer = buildHtml(tdiv(class = "postImages postMedia")):
+        for i in post.images:
+            tdiv(class = "mediaHolder"):
+                tdiv(class = "is-hidden imgPlaceholder")
+                img(src = i.url)
+
+    return articleSkeleton(post, none(VNode), none(VNode), some(footer))
 
 #TODO Make tweet buttons button elements
