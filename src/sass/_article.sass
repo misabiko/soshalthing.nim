@@ -38,6 +38,43 @@ p.articleParagraph
 	white-space: pre-line
 	overflow-wrap: anywhere
 
+.repostLabel
+	margin-left: 64px
+	color: $light
+	font-size: smaller
+
+	a
+		margin-left: 1rem
+		color: $light
+
+		&:hover
+			text-decoration: underline
+
+.quotedPost
+	border: 2px solid $scheme-main-ter
+	border-radius: 6px
+	padding: 16px
+
+	.names
+		text-overflow: ellipsis
+		white-space: nowrap
+		overflow: hidden
+		display: inline-block
+		max-width: 300px
+
+		strong
+			margin-right: 0.5rem
+			color: $white-ter
+
+		&:hover > *
+			text-decoration: underline
+
+	span *
+			vertical-align: middle
+
+	p
+		white-space: pre-line
+
 .postImagesCompact
 	display: flex
 	flex-wrap: wrap

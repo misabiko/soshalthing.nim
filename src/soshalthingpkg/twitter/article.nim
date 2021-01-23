@@ -80,16 +80,30 @@ proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], f
                 buttons(post)
         if footer.isSome: footer.get()
 
-proc toVNode*(id: string): VNode =
-    var data = datas[id]
-    let post = data.getPost()
+proc repostHeader(repost: Repost): VNode =
+    let href = "https://twitter.com/" & repost.reposterHandle
+    return buildHtml(tdiv(class = "repostLabel")):
+        a(href=href, target="_blank", rel="noopener noreferrer"):
+            text repost.reposterName & " retweeted"
 
-    let footer = buildHtml(tdiv(class = "postImages postMedia")):
+proc articleMedia(post: Post): VNode =
+    return buildHtml(tdiv(class = "postImages postMedia")):
         for i in post.images:
             tdiv(class = "mediaHolder"):
                 tdiv(class = "is-hidden imgPlaceholder")
                 img(src = i.url)
 
-    return articleSkeleton(post, none(VNode), none(VNode), some(footer))
+proc toVNode*(id: string): VNode =
+    var data = datas[id]
+    let post = data.getPost()
+
+    let footer = some(articleMedia(post))
+
+    let header = if data of Repost:
+        some(repostHeader(data.Repost))
+    else:
+        none(VNode)
+
+    return articleSkeleton(post, header, none(VNode), footer)
 
 #TODO Make tweet buttons button elements
