@@ -2,7 +2,7 @@ import json, options, times, sequtils, strutils
 import ../article
 
 type
-    Post* = object of ArticleData
+    Post* = ref object of ArticleData
         authorName*: string
         authorHandle*: string
         authorAvatar*: string
@@ -16,12 +16,12 @@ type
         #userMentions?*: UserMentionData[]
         #hashtags?*: HashtagData[]
         #externalLinks?*: ExternalLinkData[]
-    Repost* = object of ArticleData
+    Repost* = ref object of ArticleData
         repostedId*: string
         reposterName*: string
         reposterHandle*: string
         reposterAvatar*: string
-    Quote* = object of Post
+    Quote* = ref object of Post
         quotedId*: string
     #ImageSize = object
     #    w, h: int
@@ -41,6 +41,7 @@ type
         #hashtags : HashtagData[]
         #externalLinks : ExternalLinkData[]
         urls: seq[PostURLData]
+    Payload* = tuple[post: Post, repost: Option[Repost], quote: Option[Quote]]
 
 #Tue Aug 18 00:00:00 +0000 2020
 const tweetTimeFormat = initTimeFormat("ddd MMM dd HH:mm:ss zz'00' YYYY")

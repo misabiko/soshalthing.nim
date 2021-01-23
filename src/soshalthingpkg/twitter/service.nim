@@ -1,6 +1,6 @@
 import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, article, tables
 import ../service
-from ../article  as ba import ArticleData
+from ../article as ba import ArticleData
 
 type
     TimelinePayload = object
@@ -21,8 +21,7 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
         elif parsed.quote.isSome:
             result.quotes.add(parsed.quote.get())
 
-proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
-    let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
+proc handlePayload(tweets: JsonNode, articles: var RSeq[string], bottom = false) =
     let payload = parseTweets(tweets)
     for p in payload.posts:
         if not datas.hasKey(p.id):
@@ -30,18 +29,30 @@ proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
             articles.add(p.id)
         else:
             p.addArticle()
+    
+    for r in payload.reposts:
+        if not datas.hasKey(r.id):
+            r.addArticle()
+            articles.add(r.id)
+        else:
+            r.addArticle()
+    
+    for q in payload.quotes:
+        if not datas.hasKey(q.id):
+            q.addArticle()
+            articles.add(q.id)
+        else:
+            q.addArticle()
+
+proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
+    let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
+    handlePayload(tweets, articles, bottom)
 
 proc getUserMedia*(articles: var RSeq[string], bottom = false) {.async.} =
     let tweets = await fetch("http://127.0.0.1:5000/user_timeline").toJsonNode()
-    let payload = parseTweets(tweets)
-    for p in payload.posts:
-        if not datas.hasKey(p.id):
-            p.addArticle()
-            articles.add(p.id)
-        else:
-            p.addArticle()
+    handlePayload(tweets, articles, bottom)
 
-proc getData(id: string): ArticleData = datas[id].ArticleData
+proc getData(id: string): ArticleData = datas[id]
 
 let TwitterService* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getHomeTimeline)
 let TwitterService2* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getUserMedia)

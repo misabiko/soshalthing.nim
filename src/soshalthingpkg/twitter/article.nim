@@ -1,13 +1,16 @@
 import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json
 import ../article, tweet, fetch
 
-var datas* = initOrderedTable[string, Post]()
+var datas* = initOrderedTable[string, ArticleData]()
 
-proc addArticle*(a: Post) = datas[a.id] = a
+proc addArticle*(a: ArticleData) = datas[a.id] = a
 
 proc toTimestampStr(dt: DateTime): string =
+    if not dt.isInitialized:
+        return "sometime"
+
     let n = now()
-    let interval = between(dt, now())
+    let interval = between(dt, n)
     let parts = interval.toParts
     if n.year != dt.year:
         return dt.format("d MMM YYYY")
@@ -46,26 +49,39 @@ proc buttons(post: Post): VNode =
                 span(class = "icon"):
                     italic(class="fas fa-ellipsis-h")
 
+method getPost(article: ArticleData): Post {.base.} =
+    discard
+
+method getPost(article: Post): Post =
+    return article
+
+method getPost(article: Repost): Post =
+    return datas[article.repostedId].Post
+
 proc toVNode*(id: string): VNode =
-    let data = datas[id]
+    var data = datas[id]
+    echo data.repr
+    let post = data.getPost()
+    echo post.repr
+
     result = buildHtml(article(class = "article")):
         tdiv(class = "media"):
             figure(class="media-left"):
                 p(class="image is-64x64"):
-                    img(alt=data.authorHandle & "'s avatar", src=data.authorAvatar)
+                    img(alt=post.authorHandle & "'s avatar", src=post.authorAvatar)
             tdiv(class="media-content"):
                 tdiv(class="content"):
                     tdiv(class="articleHeader"):
                         a(class="names"):
-                            strong: text data.authorName
-                            small: text "@" & data.authorHandle
+                            strong: text post.authorName
+                            small: text "@" & post.authorHandle
                         span(class="timestamp"):
-                            small: text data.creationTime.toTimestampStr
+                            small: text post.creationTime.toTimestampStr
                     tdiv(class="tweet-paragraph"):
-                        text data.text
-                buttons(data)
+                        text post.text
+                buttons(post)
         tdiv(class = "postImages postMedia"):
-            for i in data.images:
+            for i in post.images:
                 tdiv(class = "mediaHolder"):
                     tdiv(class = "is-hidden imgPlaceholder")
                     img(src = i.url)
