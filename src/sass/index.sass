@@ -1,5 +1,6 @@
 @use 'core' as *
 @use 'timeline' as *
+@use 'article' as *
 @import "bulma.sass"
 
 
@@ -40,88 +41,3 @@ body
 
 .autoScrollInput
 	width: 80px
-
-article.article
-	padding: 1rem
-	background-color: $scheme-main-bis
-	margin-bottom: 2px
-
-	figure img
-		border-radius: 4px
-
-.postMedia
-	margin-top: 1rem
-
-.articleHeader *
-	vertical-align: middle
-
-	small
-		color: $light
-
-.names
-	text-overflow: ellipsis
-	white-space: nowrap
-	overflow: hidden
-	display: inline-block
-	max-width: 300px
-
-	strong
-		margin-right: 0.5rem
-		color: $white-ter
-
-	&:hover > *
-		text-decoration: underline
-
-.timestamp
-	float: right
-
-p.articleParagraph
-	white-space: pre-line
-	overflow-wrap: anywhere
-
-.postImagesCompact
-	display: flex
-	flex-wrap: wrap
-
-.mediaHolder
-	overflow: hidden
-	display: flex
-	justify-content: center
-	border-radius: 8px
-
-	&:not(:last-child)
-		margin-bottom: 2px
-
-	img
-		align-self: center
-		width: 100%
-
-	&.mediaHolderCompact
-		max-height: 16vh
-		width: 100%
-
-		&:not(:only-child)
-			margin: 2px
-			max-width: 49%
-
-			&.landscape img
-				width: unset
-				height: 110%
-
-			&.portrait img
-				width: 110%
-				height: unset
-
-		img
-			object-fit: cover
-
-		&.thirdImage
-			max-width: unset
-
-			&.landscape img
-				width: unset
-				height: 175%
-
-			&.portrait img
-				width: 175%
-				height: unset

@@ -22,3 +22,5 @@ when defined(js):
 # TODO Serve css with right MIME
 # TODO Move fontawesome to separate module
 # TODO Handle server not responding
+# TODO Get tweet status object
+# TODO Handle over rate limit

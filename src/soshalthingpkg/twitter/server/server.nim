@@ -1,4 +1,4 @@
-import twitter, httpclient, jester, json, strtabs
+import twitter, httpclient, jester, json, strtabs, strutils
 
 let credentials = parseFile("credentials.json")
 
@@ -17,4 +17,8 @@ routes:
 
     get "/user_timeline":
         let r = twitterAPI.statusesUserTimeline({"include_rts": "false", "count": "200"}.newStringTable)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
+    get "/status/@id":
+        let r = twitterAPI.statusesShow parseInt(@"id")
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)

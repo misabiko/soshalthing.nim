@@ -1,5 +1,5 @@
-import karax/[vdom, karaxdsl], tables, times
-import ../article, tweet
+import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json
+import ../article, tweet, fetch
 
 var datas* = initOrderedTable[string, Post]()
 
@@ -20,6 +20,32 @@ proc toTimestampStr(dt: DateTime): string =
     if parts[Seconds] > 0:
         return $parts[Seconds] & "s"
 
+proc printTweet(id: string) {.async.} =
+    let tweet = await fetch("http://127.0.0.1:5000/status/" & id).toJsonNode()
+    echo tweet
+
+proc buttons(post: Post): VNode =
+    result = buildHtml(nav(class="level is-mobile")):
+        tdiv(class="level-left"):
+            a(class = "level-item articleButton repostButton"):
+                span(class = "icon"):
+                    italic(class="fas fa-retweet")
+                span: text $post.repostCount
+            a(class = "level-item articleButton likeButton"):
+                span(class = "icon"):
+                    italic(class="far fa-heart")
+                span: text $post.likeCount
+            #if articlehasimages:
+            #    a(class = "level-item articleButton compactOverrideButton"):
+            #        span(class = "icon"):
+            #            italic(class="fas fa-expand")
+            a(class = "level-item articleButton articleMenuButton"):
+                proc onclick() =
+                    echo "menuclick!"
+                    discard printTweet(post.id)
+                span(class = "icon"):
+                    italic(class="fas fa-ellipsis-h")
+
 proc toVNode*(id: string): VNode =
     let data = datas[id]
     result = buildHtml(article(class = "article")):
@@ -37,8 +63,11 @@ proc toVNode*(id: string): VNode =
                             small: text data.creationTime.toTimestampStr
                     tdiv(class="tweet-paragraph"):
                         text data.text
-        tdiv(class = "postImages"):
+                buttons(data)
+        tdiv(class = "postImages postMedia"):
             for i in data.images:
                 tdiv(class = "mediaHolder"):
                     tdiv(class = "is-hidden imgPlaceholder")
                     img(src = i.url)
+
+#TODO Make tweet buttons button elements

@@ -1,4 +1,4 @@
-import json, options, times, sequtils, tables
+import json, options, times, sequtils
 import ../article
 
 type
