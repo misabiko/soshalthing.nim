@@ -58,6 +58,14 @@ method getPost(article: Post): Post =
 method getPost(article: Repost): Post =
     return datas[article.repostedId].Post
 
+proc articleHeader(post: Post): VNode =
+    return buildHtml(tdiv(class="articleHeader")):
+        a(class="names"):
+            strong: text post.authorName
+            small: text "@" & post.authorHandle
+        span(class="timestamp"):
+            small: text post.creationTime.toTimestampStr
+
 proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], footer: Option[VNode]): VNode =
     return buildHtml(article(class = "article")):
         if aHeader.isSome: aHeader.get()
@@ -68,12 +76,7 @@ proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], f
                     img(alt=post.authorHandle & "'s avatar", src=post.authorAvatar)
             tdiv(class="media-content"):
                 tdiv(class="content"):
-                    tdiv(class="articleHeader"):
-                        a(class="names"):
-                            strong: text post.authorName
-                            small: text "@" & post.authorHandle
-                        span(class="timestamp"):
-                            small: text post.creationTime.toTimestampStr
+                    articleHeader(post)
                     tdiv(class="tweet-paragraph"):
                         text post.text
                 if extra.isSome: extra.get()
@@ -93,6 +96,13 @@ proc articleMedia(post: Post): VNode =
                 tdiv(class = "is-hidden imgPlaceholder")
                 img(src = i.url)
 
+proc quotedPost(post: Post): VNode =
+    return buildHtml(tdiv(class = "quotedPost")):
+        articleHeader(post)
+        tdiv(class="tweet-paragraph"):
+            text post.text
+        articleMedia(post)
+
 proc toVNode*(id: string): VNode =
     var data = datas[id]
     let post = data.getPost()
@@ -104,6 +114,11 @@ proc toVNode*(id: string): VNode =
     else:
         none(VNode)
 
-    return articleSkeleton(post, header, none(VNode), footer)
+    let extra = if data of Quote:
+        some(quotedPost(datas[data.Quote.quotedId].Post))
+    else:
+        none(VNode)
+
+    return articleSkeleton(post, header, extra, footer)
 
 #TODO Make tweet buttons button elements

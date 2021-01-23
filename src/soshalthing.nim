@@ -16,7 +16,6 @@ when defined(js):
     setRenderer createDom
 
 # TODO Show endpoint status
-# TODO Match tweetdeck's home timeline
 # TODO Have an event add new articles to timeline
     # If you have two timelines using the same endpoint and refresh one, both should update
 # TODO Serve css with right MIME
