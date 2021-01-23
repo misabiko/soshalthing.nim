@@ -59,6 +59,11 @@ proc parseEntities(tweet: JsonNode): Entities =
     elif tweet.hasKey("entities") and tweet["entities"].hasKey("media"):
         result.images = @[tweet["entities"]["media"][0].newImageData]
 
+proc getText(tweet: JsonNode): string =
+    if tweet.hasKey("full_text"):
+        tweet["full_text"].str
+    else:
+        tweet["text"].str
 
 proc toPost(tweet: JsonNode): Post =
     let user = tweet["user"]
@@ -70,7 +75,7 @@ proc toPost(tweet: JsonNode): Post =
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
-        text: if tweet.hasKey("full_text"): tweet["full_text"].str else: tweet["text"].str,
+        text: tweet.getText(),
         images: entities.images,
         #video,
         liked: tweet["favorited"].bval,
@@ -104,7 +109,7 @@ proc toQuote(tweet: JsonNode): Quote =
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
-        text: tweet["text"].str,
+        text: tweet.getText(),
         #images,
         #video,
         liked: tweet["favorited"].bval,

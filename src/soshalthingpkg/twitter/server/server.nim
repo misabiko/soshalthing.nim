@@ -12,13 +12,13 @@ echo "Twitter credenditals status: " & resp.status
 
 routes:
     get "/home_timeline":
-        let r = twitterAPI.statusesHomeTimeline()
+        let r = twitterAPI.statusesHomeTimeline {"tweet_mode": "extended"}.newStringTable
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
 
     get "/user_timeline":
-        let r = twitterAPI.statusesUserTimeline({"include_rts": "false", "count": "200"}.newStringTable)
+        let r = twitterAPI.statusesUserTimeline {"tweet_mode": "extended", "include_rts": "false", "count": "200"}.newStringTable
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
 
     get "/status/@id":
-        let r = twitterAPI.statusesShow parseInt(@"id")
+        let r = twitterAPI.statusesShow(parseInt(@"id"), {"tweet_mode": "extended"}.newStringTable)
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
