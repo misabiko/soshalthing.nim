@@ -18,31 +18,26 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
         
         if parsed.repost.isSome:
             result.reposts.add(parsed.repost.get())
+            result.newArticles.add(parsed.repost.get().id)
         elif parsed.quote.isSome:
             result.quotes.add(parsed.quote.get())
+            result.newArticles.add(parsed.quote.get().id)
+        else:
+            result.newArticles.add(parsed.post.id)
 
 proc handlePayload(tweets: JsonNode, articles: var RSeq[string], bottom = false) =
     let payload = parseTweets(tweets)
     for p in payload.posts:
-        if not datas.hasKey(p.id):
-            p.addArticle()
-            articles.add(p.id)
-        else:
-            p.addArticle()
+        p.addArticle()
     
     for r in payload.reposts:
-        if not datas.hasKey(r.id):
-            r.addArticle()
-            articles.add(r.id)
-        else:
-            r.addArticle()
+        r.addArticle()
     
     for q in payload.quotes:
-        if not datas.hasKey(q.id):
-            q.addArticle()
-            articles.add(q.id)
-        else:
-            q.addArticle()
+        q.addArticle()
+    
+    for i in payload.newArticles:
+        articles.add(i)
 
 proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
     let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
