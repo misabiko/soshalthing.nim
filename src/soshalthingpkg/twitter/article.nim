@@ -1,9 +1,5 @@
 import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options
-import ../article, tweet, fetch
-
-var datas* = initOrderedTable[string, ArticleData]()
-
-proc addArticle*(a: ArticleData) = datas[a.id] = a
+import ../article, ../timeline, tweet, fetch
 
 proc toTimestampStr(dt: DateTime): string =
     if not dt.isInitialized:
@@ -49,26 +45,17 @@ proc buttons(post: Post): VNode =
                 span(class = "icon"):
                     italic(class="fas fa-ellipsis-h")
 
-method getPost(article: ArticleData): Post {.base.} =
-    discard
-
-method getPost(article: Post): Post =
-    return article
-
-method getPost(article: Repost): Post =
-    return datas[article.repostedId].Post
-
 proc articleHeader(post: Post): VNode =
-    return buildHtml(tdiv(class="articleHeader")):
+    buildHtml(tdiv(class="articleHeader")):
         a(class="names"):
             strong: text post.authorName
             small: text "@" & post.authorHandle
         span(class="timestamp"):
             small: text post.creationTime.toTimestampStr
 
-proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], footer: Option[VNode]): VNode =
+proc articleSkeleton(post: Post, superHeader: Option[VNode], extra: Option[VNode], footer: Option[VNode]): VNode =
     return buildHtml(article(class = "article")):
-        if aHeader.isSome: aHeader.get()
+        if superHeader.isSome: superHeader.get()
 
         tdiv(class = "media"):
             figure(class="media-left"):
@@ -83,11 +70,14 @@ proc articleSkeleton(post: Post, aHeader: Option[VNode], extra: Option[VNode], f
                 buttons(post)
         if footer.isSome: footer.get()
 
-proc repostHeader(repost: Repost): VNode =
+method getSuperHeader(data: ArticleData): Option[VNode] {.base.} = none(VNode)
+
+method getSuperHeader(repost: Repost): Option[VNode] =
     let href = "https://twitter.com/" & repost.reposterHandle
-    return buildHtml(tdiv(class = "repostLabel")):
-        a(href=href, target="_blank", rel="noopener noreferrer"):
-            text repost.reposterName & " retweeted"
+    return some do:
+        buildHtml(tdiv(class = "repostLabel")):
+            a(href=href, target="_blank", rel="noopener noreferrer"):
+                text repost.reposterName & " retweeted"
 
 proc articleMedia(post: Post): VNode =
     return buildHtml(tdiv(class = "postImages postMedia")):
@@ -96,29 +86,29 @@ proc articleMedia(post: Post): VNode =
                 tdiv(class = "is-hidden imgPlaceholder")
                 img(src = i.url)
 
-proc quotedPost(post: Post): VNode =
-    return buildHtml(tdiv(class = "quotedPost")):
-        articleHeader(post)
-        tdiv(class="tweet-paragraph"):
-            text post.text
-        articleMedia(post)
+method getQuotedPost(articles: OrderedTableRef[string, ArticleData], data: ArticleData): Option[VNode] {.base.} = none(VNode)
 
-proc toVNode*(id: string): VNode =
-    var data = datas[id]
-    let post = data.getPost()
+method getQuotedPost(articles: OrderedTableRef[string, ArticleData], quote: Quote): Option[VNode] =
+    let post = articles[quote.quotedId].Post
+    return some do:
+        buildHtml(tdiv(class = "quotedPost")):
+            articleHeader(post)
+            tdiv(class="tweet-paragraph"):
+                text post.text
+            articleMedia(post)
 
-    let footer = some(articleMedia(post))
 
-    let header = if data of Repost:
-        some(repostHeader(data.Repost))
+proc toVNode*(t: Timeline, id: string): VNode =
+    let data = t.service.articles[id]
+    let actualPost = if data of Repost:
+        t.service.articles[Repost(data).repostedId].Post
     else:
-        none(VNode)
+        data.Post
 
-    let extra = if data of Quote:
-        some(quotedPost(datas[data.Quote.quotedId].Post))
-    else:
-        none(VNode)
+    let footer = some(articleMedia(actualPost))
 
-    return articleSkeleton(post, header, extra, footer)
+    let extra = t.service.articles.getQuotedPost(data)
+
+    return articleSkeleton(actualPost, data.getSuperHeader(), extra, footer)
 
 #TODO Make tweet buttons button elements

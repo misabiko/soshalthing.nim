@@ -19,6 +19,15 @@ routes:
         let r = twitterAPI.statusesUserTimeline {"tweet_mode": "extended", "include_rts": "false", "count": "200"}.newStringTable
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
 
+    get "/search":
+        echo "q: " & request.params.getOrDefault("q")
+        let r = twitterAPI.searchTweets(request.params.getOrDefault("q"), {"tweet_mode": "extended", "result_type": "recent", "count": "200"}.newStringTable)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
+    get "/list":
+        let r = twitterAPI.listsStatuses(request.params.getOrDefault("slug"), {"tweet_mode": "extended", "include_rts": "false", "count": "200", "owner_screen_name": request.params.getOrDefault("owner_screen_name")}.newStringTable)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
     get "/status/@id":
         let r = twitterAPI.statusesShow(parseInt(@"id"), {"tweet_mode": "extended"}.newStringTable)
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)

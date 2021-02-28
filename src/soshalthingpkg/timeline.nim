@@ -1,17 +1,23 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat
-import service
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables
+import service, article
 
 type
     ArticlesContainer* = proc(self: var Timeline): VNode
-    Timeline* = object
+    ToVNodeProc* = proc(t: Timeline, id: string): VNode
+    Timeline* = ref object
         name*: string
         articles*: RSeq[string]
         service*: ServiceInfo
+        toVNode: ToVNodeProc
+        endpointIndex: int
+        options*: TableRef[string, string]
         container*: ArticlesContainer
         infiniteLoad*: bool
         needTop*, needBottom*, loadingTop*, loadingBottom*: bool
 
-proc article(self: Timeline, id: string): VNode = self.service.toVNode(id)
+proc article(self: Timeline, id: string): VNode = self.toVNode(self, id)
+
+proc endpoint(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
 
 proc basicContainer(self: var Timeline): VNode =
     vmap(self.articles, tdiv(class="timelineArticles"), self.article)
@@ -20,14 +26,14 @@ proc basicSortedContainer*(self: var Timeline): VNode =
     var copy: seq[string]
     for i in 0..<len(self.articles):
         copy.add(self.articles[i])
-    copy.sort(proc(x, y: string): int = cmp(self.service.getData(y).creationTime, self.service.getData(x).creationTime))
+    copy.sort(proc(x, y: string): int = cmp(self.service.articles[y].creationTime, self.service.articles[x].creationTime))
     result = buildHtml(tdiv(class="timelineArticles")):
         for i in copy:
             self.article i
 
 proc refresh*(self: Timeline, bottom = true) {.async.} =
     var a = self.articles
-    await self.service.refresh(a, bottom)
+    await self.endpoint.refresh(self.service.articles, a, bottom, self.options)
     redraw()
     let direction = if bottom:
         "bottom"
@@ -53,25 +59,49 @@ proc refillBottom*(self: var Timeline) {.async.} =
     await self.refresh()
     self.loadingBottom = false
 
-proc newTimeline*(name: string, service: ServiceInfo, container: ArticlesContainer = basicContainer): Timeline =
-    result = Timeline(name: name, articles: newRSeq[string](), service: service, container: container, needTop: true)
+proc newTimeline*(
+        name: string,
+        service: ServiceInfo,
+        endpointIndex: int,
+        toVNode: ToVNodeProc,
+        container: ArticlesContainer = basicContainer,
+        options = newTable[string, string]()
+    ): Timeline =
+    result = Timeline(
+        name: name,
+        articles: newRSeq[string](),
+        service: service,
+        endpointIndex: endpointIndex,
+        toVNode: toVNode,
+        options: options,
+        container: container,
+        needTop: true
+    )
     discard result.refresh()
 
-proc timeline*(self: var Timeline, class = "timeline"): VNode =
+proc headerButtons*(self: var Timeline): seq[VNode] =
+    result.add do:
+        buildHtml(button(class="refreshTimeline")):
+            span(class="icon"):
+                italic(class="fas fa-lg fa-sync-alt")
+
+            proc onclick() = discard self.refresh()
+    
+    result.add do:
+        buildHtml(button(class="openTimelineOptions")):
+            span(class="icon"):
+                italic(class="fas fa-lg fa-ellipsis-v")
+
+proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self)): VNode =
     result = buildHtml(section(class = class)):
         tdiv(class = "timelineHeader"):
             strong: text self.name
 
             tdiv(class="timelineButtons"):
-                button(class="refreshTimeline"):
-                    span(class="icon"):
-                        italic(class="fas fa-lg fa-sync-alt")
-
-                    proc onclick() = discard self.refresh()
-                button(class="openTimelineOptions"):
-                    span(class="icon"):
-                        italic(class="fas fa-lg fa-ellipsis-v")
+                for b in hButtons:
+                    b
         
         self.container(self)
 
 # TODO Clicking head button move individually
+# TODO Consider using StringTable for options

@@ -25,29 +25,38 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
         else:
             result.newArticles.add(parsed.post.id)
 
-proc handlePayload(tweets: JsonNode, articles: var RSeq[string], bottom = false) =
-    let payload = parseTweets(tweets)
+proc handlePayload(tweets: JsonNode, articles: OrderedTableRef[string, ArticleData], timelineArticles: var RSeq[string], bottom = false) =
+    let payload = if tweets.kind == JArray:
+        parseTweets(tweets)
+    else:
+        parseTweets(tweets["statuses"])
+    
     for p in payload.posts:
-        p.addArticle()
+        articles[p.id] = p
     
     for r in payload.reposts:
-        r.addArticle()
+        articles[r.id] = r
     
     for q in payload.quotes:
-        q.addArticle()
+        articles[q.id] = q
     
     for i in payload.newArticles:
-        articles.add(i)
+        timelineArticles.add(i)
 
-proc getHomeTimeline*(articles: var RSeq[string], bottom = false) {.async.} =
-    let tweets = await fetch("http://127.0.0.1:5000/home_timeline").toJsonNode()
-    handlePayload(tweets, articles, bottom)
+proc getRefreshProc(endpoint: string): RefreshProc =
+    let url = newURL(endpoint, "http://127.0.0.1:5000/")
 
-proc getUserMedia*(articles: var RSeq[string], bottom = false) {.async.} =
-    let tweets = await fetch("http://127.0.0.1:5000/user_timeline").toJsonNode()
-    handlePayload(tweets, articles, bottom)
+    return proc(articles: OrderedTableRef[string, ArticleData], timelineArticles: var RSeq[string], bottom = false, options: TableRef[string, string]) {.async.} =
+        let localUrl = newUrl(url)
+        localUrl.searchParams.setParams(options)
+        echo localUrl.toString()
 
-proc getData(id: string): ArticleData = datas[id]
+        let tweets = await fetch(localUrl.toString()).toJsonNode()
+        handlePayload(tweets, articles, timelineArticles, bottom)
 
-let TwitterService* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getHomeTimeline)
-let TwitterService2* = ServiceInfo(toVNode: article.toVNode, getData: getData, refresh: getUserMedia)
+let TwitterService* = newService(@[
+    EndpointInfo(name: "Home Timeline", refresh: getRefreshProc("home_timeline")),
+    EndpointInfo(name: "User Media", refresh: getRefreshProc("user_timeline")),
+    EndpointInfo(name: "Search", refresh: getRefreshProc("search")),
+    EndpointInfo(name: "List", refresh: getRefreshProc("list"))
+])

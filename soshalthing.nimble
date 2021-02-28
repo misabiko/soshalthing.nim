@@ -19,6 +19,9 @@ task proxy, "Launches the twitter proxy":
 task sass, "Build stylesheet":
     exec "sass.cmd -I bulma src/sass/index.sass bin/style.css"
 
+task build, "Build SoshalThing":
+    exec "nim js -o:bin/soshalthing.js src/soshalthing.nim"
+
 task karun, "Launch with karun":
     sassTask()
     withDir("bin"):
