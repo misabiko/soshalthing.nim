@@ -1,4 +1,4 @@
-import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, tables
+import karax/[kdom, reactive], fetch, asyncjs, json, sequtils, options, tweet, tables
 import ../service
 from ../article as ba import ArticleData
 
@@ -10,6 +10,8 @@ type
         newArticles: seq[string]
     RateLimitInfo* = object
         limit*, remaining*, reset*: int
+    TwitterEndpointInfo* = ref object of EndpointInfo
+        fullEndpoint: string
 
 var rateLimits* = initTable[string, RateLimitInfo]()
 
@@ -58,9 +60,9 @@ proc updatingRateLimits() {.async.} =
                 rateLimits[endpoint].remaining = rate["remaining"].num.int
                 rateLimits[endpoint].reset = rate["reset"].num.int
     
-    echo rateLimits["/statuses/home_timeline"]
+    echo "Refreshed rate limits..."
 
-proc getRefreshProc(endpoint: string): RefreshProc =
+proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")
 
     return proc(articles: OrderedTableRef[string, ArticleData], timelineArticles: var RSeq[string], bottom = false, options: TableRef[string, string]) {.async.} =
@@ -71,11 +73,18 @@ proc getRefreshProc(endpoint: string): RefreshProc =
         let tweets = await fetch(localUrl.toString()).toJsonNode()
         handlePayload(tweets, articles, timelineArticles, bottom)
 
-        await updatingRateLimits()
+        rateLimits[fullEndpoint].remaining.dec
+
+proc endpointIsReady(fullEndpoint: string): proc(): bool =
+    return proc(): bool =
+        rateLimits[fullEndpoint].remaining > 0
 
 proc newTwitterEndpoint(name, proxyEndpoint, fullEndpoint: string, limit, reset: int): EndpointInfo =
-    result = EndpointInfo(name: name, refresh: proxyEndpoint.getRefreshProc())
+    result = TwitterEndpointInfo(name: name, refresh: proxyEndpoint.getRefreshProc(fullEndpoint), isReady: fullEndpoint.endpointIsReady(), fullEndpoint: fullEndpoint)
+
     rateLimits[fullEndpoint] = RateLimitInfo(limit: limit, remaining: limit, reset: reset)
+
+let rateLimitInterval = window.setInterval(proc() = discard updatingRateLimits(), 60000)
 
 let TwitterService* = newService(@[
     newTwitterEndpoint("Home Timeline", "home_timeline", "/statuses/home_timeline", 15, 1614570897),

@@ -32,6 +32,10 @@ proc basicSortedContainer*(self: var Timeline): VNode =
             self.article i
 
 proc refresh*(self: Timeline, bottom = true) {.async.} =
+    if not self.endpoint.isReady():
+        echo self.name & "'s endpoint is over limit."
+        return
+
     var a = self.articles
     await self.endpoint.refresh(self.service.articles, a, bottom, self.options)
     redraw()
@@ -93,8 +97,12 @@ proc headerButtons*(self: var Timeline): seq[VNode] =
                 italic(class="fas fa-lg fa-ellipsis-v")
 
 proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self)): VNode =
-    result = buildHtml(section(class = class)):
-        tdiv(class = "timelineHeader"):
+    var headerClass = "timelineHeader"
+    if not self.endpoint.isReady():
+        headerClass &= " timelineInvalid"
+
+    buildHtml(section(class = class)):
+        tdiv(class = headerClass):
             strong: text self.name
 
             tdiv(class="timelineButtons"):
