@@ -15,9 +15,9 @@ type
         infiniteLoad*: bool
         needTop*, needBottom*, loadingTop*, loadingBottom*: bool
 
-proc article(self: Timeline, id: string): VNode = self.toVNode(self, id)
+proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
-proc endpoint(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
+proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
 
 proc basicContainer(self: var Timeline): VNode =
     vmap(self.articles, tdiv(class="timelineArticles"), self.article)
