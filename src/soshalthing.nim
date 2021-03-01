@@ -17,6 +17,10 @@ when defined(js):
 
     setRenderer createDom
 
+# TODO Interval refresh
+# TODO Login
+# TODO Switch container
+    # Bring masonry in soshal
 # TODO Have an event add new articles to timeline
     # If you have two timelines using the same endpoint and refresh one, both should update
 # TODO Serve css with right MIME
