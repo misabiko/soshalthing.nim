@@ -1,4 +1,4 @@
-import karax/[vdom, reactive], asyncjs, article, tables
+import karax/reactive, asyncjs, article, tables
 
 type
     RefreshProc* = proc(

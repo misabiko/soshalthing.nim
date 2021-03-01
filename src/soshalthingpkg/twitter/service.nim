@@ -8,6 +8,10 @@ type
         reposts: seq[Repost]
         quotes: seq[Quote]
         newArticles: seq[string]
+    RateLimitInfo* = object
+        limit*, remaining*, reset*: int
+
+var rateLimits = initTable[string, RateLimitInfo]()
 
 proc parseTweets(tweets: JsonNode): TimelinePayload =
     for t in tweets:
@@ -40,8 +44,21 @@ proc handlePayload(tweets: JsonNode, articles: OrderedTableRef[string, ArticleDa
     for q in payload.quotes:
         articles[q.id] = q
     
-    for i in payload.newArticles:
-        timelineArticles.add(i)
+    for id in payload.newArticles:
+        if id notin timelineArticles:
+            timelineArticles.add(id)
+
+proc updatingRateLimits() {.async.} =
+    let ratelimit = await fetch("http://127.0.0.1:5000/ratelimit").toJsonNode()
+    
+    for resType, rates in ratelimit["resources"].pairs:
+        for endpoint, rate in rates.pairs:
+            if endpoint in rateLimits:
+                rateLimits[endpoint].limit = rate["limit"].num.int
+                rateLimits[endpoint].remaining = rate["remaining"].num.int
+                rateLimits[endpoint].reset = rate["reset"].num.int
+    
+    echo rateLimits["/statuses/home_timeline"]
 
 proc getRefreshProc(endpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")
@@ -54,9 +71,15 @@ proc getRefreshProc(endpoint: string): RefreshProc =
         let tweets = await fetch(localUrl.toString()).toJsonNode()
         handlePayload(tweets, articles, timelineArticles, bottom)
 
+        await updatingRateLimits()
+
+proc newTwitterEndpoint(name, proxyEndpoint, fullEndpoint: string, limit, reset: int): EndpointInfo =
+    result = EndpointInfo(name: name, refresh: proxyEndpoint.getRefreshProc())
+    rateLimits[fullEndpoint] = RateLimitInfo(limit: limit, remaining: limit, reset: reset)
+
 let TwitterService* = newService(@[
-    EndpointInfo(name: "Home Timeline", refresh: getRefreshProc("home_timeline")),
-    EndpointInfo(name: "User Media", refresh: getRefreshProc("user_timeline")),
-    EndpointInfo(name: "Search", refresh: getRefreshProc("search")),
-    EndpointInfo(name: "List", refresh: getRefreshProc("list"))
+    newTwitterEndpoint("Home Timeline", "home_timeline", "/statuses/home_timeline", 15, 1614570897),
+    newTwitterEndpoint("User Media", "user_timeline", "/statuses/user_timeline", 900, 1614570897),
+    newTwitterEndpoint("Search", "search", "/search/tweets", 180, 1614570897),
+    newTwitterEndpoint("List", "list", "/lists/statuses", 900, 1614570897),
 ])

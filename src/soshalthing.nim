@@ -4,9 +4,9 @@ when defined(js):
 
     var timelines: seq[Timeline]
     timelines.add newTimeline("Home", TwitterService, 0, article.toVNode, container = basicSortedContainer)
-    timelines.add newTimeline("Art", TwitterService, 3, article.toVNode, container = basicSortedContainer, options = {"slug": "Art", "owner_screen_name": "misabiko"}.newTable)
-    timelines.add newTimeline("1draw", TwitterService, 2, article.toVNode, container = basicSortedContainer, options = {"q": "#深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き"}.newTable)
-    timelines.add newTimeline("User", TwitterService, 1, article.toVNode, container = basicSortedContainer)
+    # timelines.add newTimeline("Art", TwitterService, 3, article.toVNode, container = basicSortedContainer, options = {"slug": "Art", "owner_screen_name": "misabiko"}.newTable)
+    # timelines.add newTimeline("1draw", TwitterService, 2, article.toVNode, container = basicSortedContainer, options = {"q": "#深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き"}.newTable)
+    # timelines.add newTimeline("User", TwitterService, 1, article.toVNode, container = basicSortedContainer)
 
     proc createDom(): VNode =
         result = buildHtml(tdiv):
