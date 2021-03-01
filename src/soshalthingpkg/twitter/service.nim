@@ -1,4 +1,4 @@
-import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, article, tables
+import karax/reactive, fetch, asyncjs, json, sequtils, options, tweet, tables
 import ../service
 from ../article as ba import ArticleData
 
@@ -11,7 +11,7 @@ type
     RateLimitInfo* = object
         limit*, remaining*, reset*: int
 
-var rateLimits = initTable[string, RateLimitInfo]()
+var rateLimits* = initTable[string, RateLimitInfo]()
 
 proc parseTweets(tweets: JsonNode): TimelinePayload =
     for t in tweets:
