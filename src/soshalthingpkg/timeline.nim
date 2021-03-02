@@ -12,8 +12,11 @@ type
         endpointIndex: int
         options*: TableRef[string, string]
         container*: ArticlesContainer
-        infiniteLoad*, needTop*, needBottom*, loadingTop*, loadingBottom*: bool
-        showHidden*: RBool
+        lastBottomRefresh*, lastTopRefresh*: Time
+        infiniteLoad*, loadingTop*, loadingBottom*: bool
+        needTop*, needBottom*, showHidden*: RBool
+
+let minRefreshDelay = initDuration(seconds = 1)
 
 proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
@@ -31,14 +34,37 @@ proc basicSortedContainer*(self: var Timeline): VNode =
         for i in copy:
             self.article i
 
-proc refresh*(self: Timeline, bottom = true) {.async.} =
+proc isRefreshingTooFast(self: Timeline, bottom: bool, now = getTime()): bool =
+    if bottom:
+        if now - self.lastBottomRefresh < minRefreshDelay:
+            return true
+    else:
+        if now - self.lastTopRefresh < minRefreshDelay:
+            return true
+    
+    false
+
+proc updateTime(self: Timeline, bottom: bool, now = getTime()) =
+    if bottom:
+        self.lastBottomRefresh = now
+    else:
+        self.lastTopRefresh = now
+
+proc refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async.} =
     if not self.endpoint.isReady():
         echo self.name & "'s endpoint is over limit."
         return
 
+    let now = getTime()
+    if not ignoreTime and self.isRefreshingTooFast(bottom, now):
+        return
+    self.updateTime(bottom, now)
+
     var a = self.articles
     await self.endpoint.refresh(self.service.articles, a, bottom, self.options)
     redraw()
+
+    self.updateTime(bottom)
     let direction = if bottom:
         "bottom"
     else:
@@ -50,8 +76,9 @@ proc refillTop*(self: var Timeline) {.async.} =
         return
     
     self.loadingTop = true
-    echo &"Refilling {self.name} top"
-    await self.refresh(false)
+    if not self.isRefreshingTooFast(false):
+        echo &"Refilling {self.name} top"
+        await self.refresh(false)
     self.loadingTop = false
 
 proc refillBottom*(self: var Timeline) {.async.} =
@@ -59,8 +86,9 @@ proc refillBottom*(self: var Timeline) {.async.} =
         return
     
     self.loadingBottom = true
-    echo &"Refilling {self.name} bottom"
-    await self.refresh()
+    if not self.isRefreshingTooFast(true):
+        echo &"Refilling {self.name} bottom"
+        await self.refresh()
     self.loadingBottom = false
 
 proc newTimeline*(
@@ -69,8 +97,10 @@ proc newTimeline*(
         endpointIndex: int,
         toVNode: ToVNodeProc,
         container: ArticlesContainer = basicContainer,
-        options = newTable[string, string]()
+        options = newTable[string, string](),
+        infiniteLoad = false,
     ): Timeline =
+    let now = getTime()
     result = Timeline(
         name: name,
         articles: newRSeq[string](),
@@ -79,18 +109,29 @@ proc newTimeline*(
         toVNode: toVNode,
         options: options,
         container: container,
-        needTop: true,
+        infiniteLoad: infiniteLoad,
+        lastBottomRefresh: now,
+        needTop: RBool(value: true),
+        needBottom: RBool(value: false),
         showHidden: RBool(value: false),
     )
-    discard result.refresh()
+
+    discard result.refresh(ignoreTime = true)
 
 proc headerButtons*(self: var Timeline): seq[VNode] =
+    result.add do:
+        buildHtml(button(class="infiniteTimeline")):
+            span(class="icon"):
+                italic(class="fas fa-lg fa-infinity")
+
+            proc onclick() = self.infiniteLoad = not self.infiniteLoad
+
     result.add do:
         buildHtml(button(class="refreshTimeline")):
             span(class="icon"):
                 italic(class="fas fa-lg fa-sync-alt")
 
-            proc onclick() = discard self.refresh()
+            proc onclick() = discard self.refresh(ignoreTime = true)
     
     result.add do:
         buildHtml(button(class="openTimelineOptions")):
