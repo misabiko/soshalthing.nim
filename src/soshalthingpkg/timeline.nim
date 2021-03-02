@@ -2,7 +2,9 @@ import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, str
 import service, article
 
 type
-    ArticlesContainer* = proc(self: var Timeline): VNode
+    TimelineProc* = proc(t: Timeline): VNode
+    ArticlesContainer* = ref object of RootObj
+        toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
     ToVNodeProc* = proc(t: Timeline, id: string): VNode
     Timeline* = ref object
         name*: string
@@ -14,7 +16,8 @@ type
         container*: ArticlesContainer
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
-        needTop*, needBottom*, showHidden*: RBool
+        needTop*, needBottom*, showHidden*, showOptions*: RBool
+        settings*: seq[TimelineProc]
 
 let minRefreshDelay = initDuration(seconds = 1)
 
@@ -22,17 +25,23 @@ proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
 proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
 
-proc basicContainer(self: var Timeline): VNode =
-    vmap(self.articles, tdiv(class="timelineArticles"), self.article)
+proc basicContainer(): ArticlesContainer =
+    let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+        vmap(t.articles, tdiv(class="timelineArticles"), t.article)
 
-proc basicSortedContainer*(self: var Timeline): VNode =
-    var copy: seq[string]
-    for i in 0..<len(self.articles):
-        copy.add(self.articles[i])
-    copy.sort(proc(x, y: string): int = cmp(self.service.articles[y].creationTime, self.service.articles[x].creationTime))
-    result = buildHtml(tdiv(class="timelineArticles")):
-        for i in copy:
-            self.article i
+    ArticlesContainer(toVNode: toVNode)
+
+proc basicSortedContainer*(): ArticlesContainer =
+    let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+        var copy: seq[string]
+        for i in 0..<len(t.articles):
+            copy.add(t.articles[i])
+        copy.sort(proc(x, y: string): int = cmp(t.service.articles[y].creationTime, t.service.articles[x].creationTime))
+        result = buildHtml(tdiv(class="timelineArticles")):
+            for i in copy:
+                t.article i
+
+    ArticlesContainer(toVNode: toVNode)
 
 proc isRefreshingTooFast(self: Timeline, bottom: bool, now = getTime()): bool =
     if bottom:
@@ -96,9 +105,9 @@ proc newTimeline*(
         service: ServiceInfo,
         endpointIndex: int,
         toVNode: ToVNodeProc,
-        container: ArticlesContainer = basicContainer,
+        container: ArticlesContainer = basicContainer(),
         options = newTable[string, string](),
-        infiniteLoad = false,
+        infiniteLoad = false
     ): Timeline =
     let now = getTime()
     result = Timeline(
@@ -114,6 +123,7 @@ proc newTimeline*(
         needTop: RBool(value: true),
         needBottom: RBool(value: false),
         showHidden: RBool(value: false),
+        showOptions: RBool(value: false)
     )
 
     discard result.refresh(ignoreTime = true)
@@ -138,6 +148,8 @@ proc headerButtons*(self: var Timeline): seq[VNode] =
             span(class="icon"):
                 italic(class="fas fa-lg fa-ellipsis-v")
 
+            proc onclick() = self.showOptions <- not self.showOptions.value
+
 proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self)): VNode =
     var headerClass = "timelineHeader"
     if not self.endpoint.isReady():
@@ -151,7 +163,12 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
                 for b in hButtons:
                     b
         
-        self.container(self)
+        if self.showOptions.value:
+            tdiv(class = "timelineOptions"):
+                for settingProc in self.settings:
+                    self.settingProc()
+
+        self.container.toVNode(self.container, self)
 
 # TODO Clicking head button move individually
 # TODO Consider using StringTable for options
