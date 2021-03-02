@@ -12,8 +12,8 @@ type
         endpointIndex: int
         options*: TableRef[string, string]
         container*: ArticlesContainer
-        infiniteLoad*: bool
-        needTop*, needBottom*, loadingTop*, loadingBottom*: bool
+        infiniteLoad*, needTop*, needBottom*, loadingTop*, loadingBottom*: bool
+        showHidden*: RBool
 
 proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
@@ -79,7 +79,8 @@ proc newTimeline*(
         toVNode: toVNode,
         options: options,
         container: container,
-        needTop: true
+        needTop: true,
+        showHidden: RBool(value: false),
     )
     discard result.refresh()
 
