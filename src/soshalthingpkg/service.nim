@@ -2,7 +2,7 @@ import karax/reactive, asyncjs, article, tables
 
 type
     RefreshProc* = proc(
-            articles: OrderedTableRef[string, ArticleData],
+            articles: ArticleCollection,
             timelineArticles: var RSeq[string],
             bottom: bool,
             options: TableRef[string, string]
@@ -13,7 +13,7 @@ type
         isReady*: proc(): bool
     ServiceInfo* = ref object
         endpoints*: seq[EndpointInfo]
-        articles*: OrderedTableRef[string, ArticleData]
+        articles*: ArticleCollection
 
 proc newService*(endpoints: seq[EndpointInfo]): ServiceInfo =
     return ServiceInfo(

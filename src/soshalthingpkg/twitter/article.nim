@@ -86,9 +86,9 @@ proc articleMedia(post: Post): VNode =
                 tdiv(class = "is-hidden imgPlaceholder")
                 img(src = i.url)
 
-method getQuotedPost(articles: OrderedTableRef[string, ArticleData], data: ArticleData): Option[VNode] {.base.} = none(VNode)
+method getQuotedPost(articles: ArticleCollection, data: ArticleData): Option[VNode] {.base.} = none(VNode)
 
-method getQuotedPost(articles: OrderedTableRef[string, ArticleData], quote: Quote): Option[VNode] =
+method getQuotedPost(articles: ArticleCollection, quote: Quote): Option[VNode] =
     let post = articles[quote.quotedId].Post
     return some do:
         buildHtml(tdiv(class = "quotedPost")):

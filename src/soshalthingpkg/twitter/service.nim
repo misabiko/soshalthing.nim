@@ -31,7 +31,7 @@ proc parseTweets(tweets: JsonNode): TimelinePayload =
         else:
             result.newArticles.add(parsed.post.id)
 
-proc handlePayload(tweets: JsonNode, articles: OrderedTableRef[string, ArticleData], timelineArticles: var RSeq[string], bottom = false) =
+proc handlePayload(tweets: JsonNode, articles: ArticleCollection, timelineArticles: var RSeq[string], bottom = false) =
     let payload = if tweets.kind == JArray:
         parseTweets(tweets)
     else:
@@ -65,7 +65,7 @@ proc updatingRateLimits() {.async.} =
 proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")
 
-    return proc(articles: OrderedTableRef[string, ArticleData], timelineArticles: var RSeq[string], bottom = false, options: TableRef[string, string]) {.async.} =
+    return proc(articles: ArticleCollection, timelineArticles: var RSeq[string], bottom = false, options: TableRef[string, string]) {.async.} =
         let localUrl = newUrl(url)
         localUrl.searchParams.setParams(options)
         echo localUrl.toString()
