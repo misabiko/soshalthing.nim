@@ -1,4 +1,4 @@
-import karax/[karax, karaxdsl, vdom, reactive], asyncjs, article, tables, strformat
+import karax/[karax, reactive], asyncjs, article, tables, strformat
 
 type
     EndpointPayload* = object

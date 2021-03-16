@@ -1,4 +1,4 @@
-import karax/[kdom, reactive], fetch, asyncjs, json, sequtils, options, tweet, tables
+import karax/[kdom], fetch, asyncjs, json, sequtils, options, tweet, tables
 import ../service
 from ../article as ba import ArticleData, ArticleCollection
 

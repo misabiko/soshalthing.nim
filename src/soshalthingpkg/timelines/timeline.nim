@@ -76,10 +76,6 @@ method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base
     await self.service.refreshEndpoint(self.endpointIndex, bottom, self.options)
 
     self.updateTime(bottom)
-    let direction = if bottom:
-        "bottom"
-    else:
-        "top"
 
 proc refillTop*(self: var Timeline) {.async.} =
     if self.loadingTop:

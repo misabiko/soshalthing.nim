@@ -1,4 +1,4 @@
-import karax / [karax, vdom, karaxdsl], strformat
+import karax / [vdom, karaxdsl], strformat
 
 proc icon*(icon: string, iconType = "fas", size = ""): VNode =
     buildHtml(span(class="icon")):
