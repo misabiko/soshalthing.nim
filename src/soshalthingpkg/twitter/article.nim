@@ -1,5 +1,5 @@
 import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options
-import ../article, ../timeline, tweet, fetch
+import ../article, ../timelines/timeline, tweet, fetch
 
 proc toTimestampStr(dt: DateTime): string =
     if not dt.isInitialized:

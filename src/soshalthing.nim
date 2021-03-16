@@ -1,6 +1,7 @@
 when defined(js):
     import karax/[karax, vdom, karaxdsl], dom, tables
-    import soshalthingpkg / [timeline, sidebar/sidebar, twitter/service, twitter/article]
+    import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
+    import soshalthingpkg / [twitter/service, twitter/article]
 
     var timelines: seq[Timeline]
     timelines.add newTimeline("Home", TwitterService, 0, article.toVNode, container = basicSortedContainer())

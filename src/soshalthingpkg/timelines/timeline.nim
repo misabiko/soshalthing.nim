@@ -1,17 +1,17 @@
 import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables
-import service, article
+import ../service, ../article
 
 type
     TimelineProc* = proc(t: Timeline): VNode
     ArticlesContainer* = ref object of RootObj
         toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
     ToVNodeProc* = proc(t: Timeline, id: string): VNode
-    Timeline* = ref object
+    Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
         service*: ServiceInfo
-        toVNode: ToVNodeProc
-        endpointIndex: int
+        toVNode*: ToVNodeProc
+        endpointIndex*: int
         options*: TableRef[string, string]
         container*: ArticlesContainer
         lastBottomRefresh*, lastTopRefresh*: Time
@@ -25,7 +25,7 @@ proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
 proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
 
-proc basicContainer(): ArticlesContainer =
+proc basicContainer*(): ArticlesContainer =
     let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
         vmap(t.articles, tdiv(class="timelineArticles"), t.article)
 
@@ -43,7 +43,7 @@ proc basicSortedContainer*(): ArticlesContainer =
 
     ArticlesContainer(toVNode: toVNode)
 
-proc isRefreshingTooFast(self: Timeline, bottom: bool, now = getTime()): bool =
+proc isRefreshingTooFast*(self: Timeline, bottom: bool, now = getTime()): bool =
     if bottom:
         if now - self.lastBottomRefresh < minRefreshDelay:
             return true
@@ -53,13 +53,13 @@ proc isRefreshingTooFast(self: Timeline, bottom: bool, now = getTime()): bool =
     
     false
 
-proc updateTime(self: Timeline, bottom: bool, now = getTime()) =
+proc updateTime*(self: Timeline, bottom: bool, now = getTime()) =
     if bottom:
         self.lastBottomRefresh = now
     else:
         self.lastTopRefresh = now
 
-proc refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async.} =
+method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base.} =
     if not self.endpoint.isReady():
         echo self.name & "'s endpoint is over limit."
         return
@@ -69,16 +69,13 @@ proc refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async.} =
         return
     self.updateTime(bottom, now)
 
-    var a = self.articles
-    await self.endpoint.refresh(self.service.articles, a, bottom, self.options)
-    redraw()
+    await self.service.refreshEndpoint(self.endpointIndex, bottom, self.options)
 
     self.updateTime(bottom)
     let direction = if bottom:
         "bottom"
     else:
         "top"
-    echo &"Refreshed {self.name} {direction} - {$a.len} articles"
 
 proc refillTop*(self: var Timeline) {.async.} =
     if self.loadingTop:
@@ -125,6 +122,7 @@ proc newTimeline*(
         showHidden: RBool(value: false),
         showOptions: RBool(value: false)
     )
+    service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     discard result.refresh(ignoreTime = true)
 

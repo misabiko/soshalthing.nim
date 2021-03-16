@@ -12,5 +12,8 @@ type
 method update*(baseData, newData: ArticleData) {.base.} =
     baseData.creationTime = newData.creationTime
 
-method update*(articles: ArticleCollection, id: string, newData: ArticleData) {.base.} =
-    articles[id].update(newData)
+proc update*(articles: ArticleCollection, id: string, newData: ArticleData) =
+    if id in articles:
+        articles[id].update(newData)
+    else:
+        articles[id] = newData

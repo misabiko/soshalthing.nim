@@ -1,13 +1,8 @@
 import karax/[kdom, reactive], fetch, asyncjs, json, sequtils, options, tweet, tables
 import ../service
-from ../article as ba import ArticleData
+from ../article as ba import ArticleData, ArticleCollection
 
 type
-    TimelinePayload = object
-        posts: seq[Post]
-        reposts: seq[Repost]
-        quotes: seq[Quote]
-        newArticles: seq[string]
     RateLimitInfo* = object
         limit*, remaining*, reset*: int
     TwitterEndpointInfo* = ref object of EndpointInfo
@@ -15,40 +10,27 @@ type
 
 var rateLimits* = initTable[string, RateLimitInfo]()
 
-proc parseTweets(tweets: JsonNode): TimelinePayload =
+proc parseTweets(tweets: JsonNode): EndpointPayload =
     for t in tweets:
         let parsed = parseTweet(t)
 
-        if not result.posts.any(proc (p: Post): bool = p.id == parsed.post.id):
-            result.posts.add(parsed.post)
+        if not result.articles.any(proc (p: Post): bool = p.id == parsed.post.id):
+            result.articles.add(parsed.post)
         
         if parsed.repost.isSome:
-            result.reposts.add(parsed.repost.get())
+            result.articles.add(parsed.repost.get())
             result.newArticles.add(parsed.repost.get().id)
         elif parsed.quote.isSome:
-            result.quotes.add(parsed.quote.get())
+            result.articles.add(parsed.quote.get())
             result.newArticles.add(parsed.quote.get().id)
         else:
             result.newArticles.add(parsed.post.id)
 
-proc handlePayload(tweets: JsonNode, articles: ArticleCollection, timelineArticles: var RSeq[string], bottom = false) =
-    let payload = if tweets.kind == JArray:
+proc handlePayload(tweets: JsonNode, bottom = false): EndpointPayload =
+    if tweets.kind == JArray:
         parseTweets(tweets)
     else:
         parseTweets(tweets["statuses"])
-    
-    for p in payload.posts:
-        articles[p.id] = p
-    
-    for r in payload.reposts:
-        articles[r.id] = r
-    
-    for q in payload.quotes:
-        articles[q.id] = q
-    
-    for id in payload.newArticles:
-        if id notin timelineArticles:
-            timelineArticles.add(id)
 
 proc updatingRateLimits() {.async.} =
     let ratelimit = await fetch("http://127.0.0.1:5000/ratelimit").toJsonNode()
@@ -65,22 +47,24 @@ proc updatingRateLimits() {.async.} =
 proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")
 
-    return proc(articles: ArticleCollection, timelineArticles: var RSeq[string], bottom = false, options: TableRef[string, string]) {.async.} =
+    return proc(bottom = false, options: TableRef[string, string], pageNum: int): Future[EndpointPayload] {.async.} =
         let localUrl = newUrl(url)
         localUrl.searchParams.setParams(options)
         echo localUrl.toString()
 
         let tweets = await fetch(localUrl.toString()).toJsonNode()
-        handlePayload(tweets, articles, timelineArticles, bottom)
+        let payload = handlePayload(tweets, bottom)
 
         rateLimits[fullEndpoint].remaining.dec
+
+        return payload
 
 proc endpointIsReady(fullEndpoint: string): proc(): bool =
     return proc(): bool =
         rateLimits[fullEndpoint].remaining > 0
 
 proc newTwitterEndpoint(name, proxyEndpoint, fullEndpoint: string, limit, reset: int): EndpointInfo =
-    result = TwitterEndpointInfo(name: name, refresh: proxyEndpoint.getRefreshProc(fullEndpoint), isReady: fullEndpoint.endpointIsReady(), fullEndpoint: fullEndpoint)
+    result = TwitterEndpointInfo(name: name, refreshProc: proxyEndpoint.getRefreshProc(fullEndpoint), isReady: fullEndpoint.endpointIsReady(), fullEndpoint: fullEndpoint)
 
     rateLimits[fullEndpoint] = RateLimitInfo(limit: limit, remaining: limit, reset: reset)
 
