@@ -1,4 +1,5 @@
 import karax / [karax, vdom, karaxdsl]
+import ../fontawesome
 import servicemenu
 
 var expanded = false
@@ -9,7 +10,6 @@ proc sidebar*(): VNode =
             servicemenu()
         tdiv(id = "sidebarButtons"):
             button(class="refreshTimeline"):
-                span(class="icon"):
-                    italic(class="fas fa-2x fa-angle-double-" & (if expanded: "left" else: "right"))
+                icon("fa-angle-double-" & (if expanded: "left" else: "right"), size = "fa-2x")
 
                 proc onclick() = expanded = not expanded

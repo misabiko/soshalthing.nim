@@ -1,5 +1,5 @@
 import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables
-import ../service, ../article
+import ../service, ../article, ../fontawesome
 
 type
     TimelineProc* = proc(t: Timeline): VNode
@@ -129,22 +129,19 @@ proc newTimeline*(
 proc headerButtons*(self: var Timeline): seq[VNode] =
     result.add do:
         buildHtml(button(class="infiniteTimeline")):
-            span(class="icon"):
-                italic(class="fas fa-lg fa-infinity")
+            icon("fa-infinity", size = "fa-lg")
 
             proc onclick() = self.infiniteLoad = not self.infiniteLoad
 
     result.add do:
         buildHtml(button(class="refreshTimeline")):
-            span(class="icon"):
-                italic(class="fas fa-lg fa-sync-alt")
+            icon("fa-sync-alt", size = "fa-lg")
 
             proc onclick() = discard self.refresh(ignoreTime = true)
     
     result.add do:
         buildHtml(button(class="openTimelineOptions")):
-            span(class="icon"):
-                italic(class="fas fa-lg fa-ellipsis-v")
+            icon("fa-ellipsis-v", size = "fa-lg")
 
             proc onclick() = self.showOptions <- not self.showOptions.value
 

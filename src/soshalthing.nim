@@ -25,5 +25,4 @@ when defined(js):
 # TODO Have an event add new articles to timeline
     # If you have two timelines using the same endpoint and refresh one, both should update
 # TODO Serve css with right MIME
-# TODO Move fontawesome to separate module
 # TODO Handle server not responding

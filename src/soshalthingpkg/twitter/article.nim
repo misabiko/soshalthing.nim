@@ -1,5 +1,5 @@
 import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options
-import ../article, ../timelines/timeline, tweet, fetch
+import ../article, ../timelines/timeline, tweet, fetch, ../fontawesome
 
 proc toTimestampStr(dt: DateTime): string =
     if not dt.isInitialized:
@@ -27,23 +27,19 @@ proc buttons(post: Post): VNode =
     result = buildHtml(nav(class="level is-mobile")):
         tdiv(class="level-left"):
             a(class = "level-item articleButton repostButton"):
-                span(class = "icon"):
-                    italic(class="fas fa-retweet")
+                icon("fa-retweet")
                 span: text $post.repostCount
             a(class = "level-item articleButton likeButton"):
-                span(class = "icon"):
-                    italic(class="far fa-heart")
+                icon("fa-heart", iconType = "far")
                 span: text $post.likeCount
             #if articlehasimages:
             #    a(class = "level-item articleButton compactOverrideButton"):
-            #        span(class = "icon"):
-            #            italic(class="fas fa-expand")
+            #        icon("fa-expand")
             a(class = "level-item articleButton articleMenuButton"):
                 proc onclick() =
                     echo "menuclick!"
                     discard printTweet(post.id)
-                span(class = "icon"):
-                    italic(class="fas fa-ellipsis-h")
+                icon("fa-ellipsis-h")
 
 proc articleHeader(post: Post): VNode =
     buildHtml(tdiv(class="articleHeader")):
