@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom
 import ../service, ../article, ../fontawesome
 
 type
@@ -6,6 +6,8 @@ type
     ArticlesContainer* = ref object of RootObj
         toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
     ToVNodeProc* = proc(t: Timeline, id: string): VNode
+    OnArticleClick {.pure.} = enum
+        Hide, Expand, Like, Nothing
     Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
@@ -17,6 +19,7 @@ type
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
         needTop*, needBottom*, showHidden*, showOptions*: RBool
+        onArticleClick*: OnArticleClick
         settings*: seq[TimelineProc]
 
 let minRefreshDelay = initDuration(seconds = 1)
@@ -97,6 +100,30 @@ proc refillBottom*(self: var Timeline) {.async.} =
         await self.refresh()
     self.loadingBottom = false
 
+proc articleClickSetting*(t: Timeline): VNode =
+    buildHtml(tdiv(class = "select")):
+        select(min = $ord(low(OnArticleClick)), max = $ord(high(OnArticleClick))):
+            for clickAction in ord(low(OnArticleClick))..ord(high(OnArticleClick)):
+                let selected = if clickAction == ord(t.onArticleClick):
+                    cstring"selected"
+                else:
+                    cstring(nil)
+                option(value = $clickAction, selected = selected):
+                    text $OnArticleClick(clickAction)
+
+            proc onchange(ev: Event; n: VNode) =
+                let value = parseInt($ev.target.value)
+                t.onArticleClick = OnArticleClick(value)
+
+proc articleClick*(t: Timeline, id: string) =
+    case t.onArticleClick:
+        of Hide:
+            t.service.articles[id].hidden <- not t.service.articles[id].hidden.value
+        of Expand:
+            echo "Expand " & id & "!"
+        else:
+            discard
+
 proc newTimeline*(
         name: string,
         service: ServiceInfo,
@@ -124,35 +151,44 @@ proc newTimeline*(
     )
     service.endpoints[endpointIndex].subscribers.add(result.articles)
 
+    result.settings.add(articleClickSetting)
+
     discard result.refresh(ignoreTime = true)
+
+proc leftHeaderButtons*(self: var Timeline): seq[VNode] =
+    discard
 
 proc headerButtons*(self: var Timeline): seq[VNode] =
     result.add do:
-        buildHtml(button(class="infiniteTimeline")):
+        buildHtml(button()):
             icon("fa-infinity", size = "fa-lg")
 
             proc onclick() = self.infiniteLoad = not self.infiniteLoad
 
     result.add do:
-        buildHtml(button(class="refreshTimeline")):
+        buildHtml(button()):
             icon("fa-sync-alt", size = "fa-lg")
 
             proc onclick() = discard self.refresh(ignoreTime = true)
     
     result.add do:
-        buildHtml(button(class="openTimelineOptions")):
+        buildHtml(button()):
             icon("fa-ellipsis-v", size = "fa-lg")
 
             proc onclick() = self.showOptions <- not self.showOptions.value
 
-proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self)): VNode =
+proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self), lhButtons = leftHeaderButtons(self)): VNode =
     var headerClass = "timelineHeader"
     if not self.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
     buildHtml(section(class = class)):
         tdiv(class = headerClass):
-            strong: text self.name
+            tdiv(class="timelineLeftHeader"):
+                strong: text self.name
+                tdiv(class="timelineButtons"):
+                    for b in lhButtons:
+                        b
 
             tdiv(class="timelineButtons"):
                 for b in hButtons:

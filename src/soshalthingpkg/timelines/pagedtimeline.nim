@@ -32,6 +32,8 @@ proc newPagedTimeline*(
     )
     service.endpoints[endpointIndex].subscribers.add(result.articles)
 
+    result.settings.add(articleClickSetting)
+
     discard result.refresh(ignoreTime = true)
 
 proc getNextTopPage*(loadedPages: seq[int]): Option[int] =
