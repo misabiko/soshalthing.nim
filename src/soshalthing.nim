@@ -19,10 +19,16 @@ when defined(js):
     setRenderer createDom
 
 # TODO Interval refresh
+    # TODO Move timeline refresh cooldown to endpoint
+    # TODO Interval should be endpoint level, if one subscriber asks for it, and every subscriber should be updated
+    # TODO If you have two timelines using the same endpoint and refresh one, both should update
+# TODO Move timelines to json file
 # TODO Login
 # TODO Switch container
-    # Bring masonry in soshal
-# TODO Have an event add new articles to timeline
-    # If you have two timelines using the same endpoint and refresh one, both should update
+    # TODO Bring masonry in soshal
+        # TODO Somehow add VNode width/height articles
 # TODO Serve css with right MIME
+# TODO Integrate serving to soshal
 # TODO Handle server not responding
+# TODO Get unit tests working on js
+    # https://nim-lang.org/docs/testament.html

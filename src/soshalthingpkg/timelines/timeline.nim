@@ -21,6 +21,7 @@ type
         needTop*, needBottom*, showHidden*, showOptions*: RBool
         onArticleClick*: OnArticleClick
         settings*: seq[TimelineProc]
+        modalId*: RString
 
 let minRefreshDelay = initDuration(seconds = 1)
 
@@ -120,7 +121,7 @@ proc articleClick*(t: Timeline, id: string) =
         of Hide:
             t.service.articles[id].hidden <- not t.service.articles[id].hidden.value
         of Expand:
-            echo "Expand " & id & "!"
+            t.modalId <- id
         else:
             discard
 
@@ -147,7 +148,8 @@ proc newTimeline*(
         needTop: RBool(value: true),
         needBottom: RBool(value: false),
         showHidden: RBool(value: false),
-        showOptions: RBool(value: false)
+        showOptions: RBool(value: false),
+        modalId: "".rstr
     )
     service.endpoints[endpointIndex].subscribers.add(result.articles)
 
@@ -182,7 +184,17 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
     if not self.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
+    let modalActivated = self.modalId.value.len > 0
     buildHtml(section(class = class)):
+        tdiv(class = "modal" & (if modalActivated: " is-active" else: "")):
+            tdiv(class = "modal-background")
+            tdiv(class = "modal-content"):
+                if modalActivated:
+                    self.article($self.modalId.value)
+            button(class = "modal-close is-large", `aria-label` = "close")
+
+            proc onclick() =
+                self.modalId <- ""
         tdiv(class = headerClass):
             tdiv(class="timelineLeftHeader"):
                 strong: text self.name

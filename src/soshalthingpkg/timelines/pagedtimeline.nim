@@ -4,6 +4,7 @@ import timeline, ../article, ../service
 type PagedTimeline* = ref object of Timeline
         loadedPages*: seq[int]
 
+# TODO Overload Timeline constructor
 proc newPagedTimeline*(
         name: string,
         service: ServiceInfo,
@@ -29,6 +30,7 @@ proc newPagedTimeline*(
         needBottom: RBool(value: false),
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
+        modalId: "".rstr
     )
     service.endpoints[endpointIndex].subscribers.add(result.articles)
 
