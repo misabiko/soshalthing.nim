@@ -22,6 +22,7 @@ type
         onArticleClick*: OnArticleClick
         settings*: seq[TimelineProc]
         modalId*: RString
+        refreshInterval*: ref Interval
 
 let minRefreshDelay = initDuration(seconds = 1)
 
@@ -126,9 +127,10 @@ proc newTimeline*(
         service: ServiceInfo,
         endpointIndex: int,
         toVNode: ToVNodeProc,
+        interval: int,
         container: ArticlesContainer = basicContainer(),
         options = newTable[string, string](),
-        infiniteLoad = false
+        infiniteLoad = false,
     ): Timeline =
     let now = getTime()
     result = Timeline(
@@ -151,6 +153,9 @@ proc newTimeline*(
 
     result.settings.add(articleClickSetting)
 
+    if interval != 0:
+        result.refreshInterval = window.setInterval(proc() = discard result.refresh(false), interval)
+    
     discard result.refresh(ignoreTime = true)
 
 proc leftHeaderButtons*(self: var Timeline): seq[VNode] =

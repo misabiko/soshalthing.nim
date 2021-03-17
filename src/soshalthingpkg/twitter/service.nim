@@ -64,7 +64,12 @@ proc endpointIsReady(fullEndpoint: string): proc(): bool =
         rateLimits[fullEndpoint].remaining > 0
 
 proc newTwitterEndpoint(name, proxyEndpoint, fullEndpoint: string, limit, reset: int): EndpointInfo =
-    result = TwitterEndpointInfo(name: name, refreshProc: proxyEndpoint.getRefreshProc(fullEndpoint), isReady: fullEndpoint.endpointIsReady(), fullEndpoint: fullEndpoint)
+    result = TwitterEndpointInfo(
+        name: name,
+        refreshProc: proxyEndpoint.getRefreshProc(fullEndpoint),
+        isReady: fullEndpoint.endpointIsReady(),
+        fullEndpoint: fullEndpoint,
+    )
 
     rateLimits[fullEndpoint] = RateLimitInfo(limit: limit, remaining: limit, reset: reset)
 

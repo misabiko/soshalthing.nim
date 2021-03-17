@@ -1,7 +1,8 @@
 import karax / [vdom, karaxdsl], tables
 import ../twitter/service
 
-proc settings(name: string): VNode =
+# TODO Avoid importing twitter
+proc settings(): VNode =
     buildHtml(tdiv(class = "box")):
         text "Twitter"
 
@@ -14,4 +15,4 @@ proc settings(name: string): VNode =
 
 proc servicemenu*(): VNode =
     buildHtml(tdiv(class = "sidebarMenu")):
-        settings("boop")
+        settings()

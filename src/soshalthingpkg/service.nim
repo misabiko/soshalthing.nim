@@ -23,7 +23,7 @@ proc newService*(endpoints: seq[EndpointInfo]): ServiceInfo =
 proc newEndpoint*(name: string, refresh: RefreshProc, isReady: proc(): bool): EndpointInfo =
     EndpointInfo(name: name, refreshProc: refresh, isReady: isReady)
 
-proc refresh(e: EndpointInfo, bottom: bool, options: TableRef[string, string], pageNum: int): Future[EndpointPayload] {.async.} =
+proc refresh*(e: EndpointInfo, bottom: bool, options: TableRef[string, string], pageNum: int): Future[EndpointPayload] {.async.} =
     let payload = await e.refreshProc(bottom, options, pageNum)
     let direction = if bottom: "down" else: "up"
     echo &"Refreshed {e.name} {direction} - {$payload.newArticles.len} articles"
@@ -35,6 +35,7 @@ proc refresh(e: EndpointInfo, bottom: bool, options: TableRef[string, string], p
 
     return payload
 
+# TODO Compose params passed to refresh (use some raw object)
 proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: TableRef[string, string], pageNum = 0) {.async.} =
     let payload = await s.endpoints[index].refresh(bottom, options, pageNum)
 
