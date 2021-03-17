@@ -23,6 +23,7 @@ type
         settings*: seq[TimelineProc]
         modalId*: RString
         refreshInterval*: ref Interval
+        articleFilter*: proc(a: ArticleData): bool
 
 let minRefreshDelay = initDuration(seconds = 1)
 
@@ -30,17 +31,24 @@ proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
 proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
 
+proc filteredArticles*(t: Timeline): seq[string] =
+    for i in 0..<len(t.articles):
+        if t.articleFilter(t.service.articles[t.articles[i]]):
+            result.add(t.articles[i])
+
 proc basicContainer*(): ArticlesContainer =
     let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+        # TODO Use filteredArticles
         vmap(t.articles, tdiv(class="timelineArticles"), t.article)
 
     ArticlesContainer(toVNode: toVNode)
 
 proc basicSortedContainer*(): ArticlesContainer =
     let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+        let filtered = t.filteredArticles()
         var copy: seq[string]
-        for i in 0..<len(t.articles):
-            copy.add(t.articles[i])
+        for id in filtered:
+            copy.add(id)
         copy.sort(proc(x, y: string): int = cmp(t.service.articles[y].creationTime, t.service.articles[x].creationTime))
         result = buildHtml(tdiv(class="timelineArticles")):
             for i in copy:
@@ -131,6 +139,7 @@ proc newTimeline*(
         container: ArticlesContainer = basicContainer(),
         options = newTable[string, string](),
         infiniteLoad = false,
+        articleFilter = proc(a: ArticleData): bool = true
     ): Timeline =
     let now = getTime()
     result = Timeline(
@@ -147,7 +156,8 @@ proc newTimeline*(
         needBottom: RBool(value: false),
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
-        modalId: "".rstr
+        modalId: "".rstr,
+        articleFilter: articleFilter,
     )
     service.endpoints[endpointIndex].subscribers.add(result.articles)
 

@@ -32,6 +32,12 @@ proc handlePayload(tweets: JsonNode, bottom = false): EndpointPayload =
     else:
         parseTweets(tweets["statuses"])
 
+proc retweetFilter*(a: ArticleData): bool =
+    not (a of Repost)
+
+proc mediaFilter*(a: ArticleData): bool =
+    Post(a).images.len > 0
+
 proc updatingRateLimits() {.async.} =
     let ratelimit = await fetch("http://127.0.0.1:5000/ratelimit").toJsonNode()
     
@@ -50,7 +56,6 @@ proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     return proc(bottom = false, options: TableRef[string, string], pageNum: int): Future[EndpointPayload] {.async.} =
         let localUrl = newUrl(url)
         localUrl.searchParams.setParams(options)
-        echo localUrl.toString()
 
         let tweets = await fetch(localUrl.toString()).toJsonNode()
         let payload = handlePayload(tweets, bottom)
