@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom, strtabs
 import ../service, ../article, ../fontawesome
 
 type
@@ -14,7 +14,7 @@ type
         service*: ServiceInfo
         toVNode*: ToVNodeProc
         endpointIndex*: int
-        options*: TableRef[string, string]
+        options*: StringTableRef
         container*: ArticlesContainer
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
@@ -82,7 +82,9 @@ method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base
         return
     self.updateTime(bottom, now)
 
-    await self.service.refreshEndpoint(self.endpointIndex, bottom, self.options)
+    var refreshOptions: RefreshOptions
+    refreshOptions["options"] = self.options
+    await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
 
     self.updateTime(bottom)
 
@@ -135,11 +137,11 @@ proc newTimeline*(
         service: ServiceInfo,
         endpointIndex: int,
         toVNode: ToVNodeProc,
-        interval: int,
         container: ArticlesContainer = basicContainer(),
-        options = newTable[string, string](),
+        options = newStringTable(),
         infiniteLoad = false,
-        articleFilter = proc(a: ArticleData): bool = true
+        articleFilter = proc(a: ArticleData): bool = true,
+        interval = 0,
     ): Timeline =
     let now = getTime()
     result = Timeline(

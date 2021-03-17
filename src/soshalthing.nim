@@ -1,31 +1,35 @@
 when defined(js):
-    import karax/[karax, vdom, karaxdsl], dom, tables
+    import karax/[karax, vdom, karaxdsl], dom, strtabs
     import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
     import soshalthingpkg / [twitter/service, twitter/article]
 
     var timelines: seq[Timeline]
     timelines.add newTimeline(
-        "Home", TwitterService, 0, article.toVNode, 64285,
-        container = basicSortedContainer()
-    )
-    timelines.add newTimeline(
-        "Art", TwitterService, 3, article.toVNode, 9000,
+        "Home", TwitterService, 0, article.toVNode,
         container = basicSortedContainer(),
-        options = {"slug": "Art", "owner_screen_name": "misabiko"}.newTable,
-        articleFilter = mediaFilter,
+        interval = 64285,
     )
     timelines.add newTimeline(
-        "1draw", TwitterService, 2, article.toVNode, 9000,
+        "Art", TwitterService, 3, article.toVNode,
+        container = basicSortedContainer(),
+        options = {"slug": "Art", "owner_screen_name": "misabiko"}.newStringTable,
+        articleFilter = mediaFilter,
+        interval = 9000,
+    )
+    timelines.add newTimeline(
+        "1draw", TwitterService, 2, article.toVNode,
         container = basicSortedContainer(),
         options = {
             "q": "-filter:retweets #深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き",
             "result_type": "recent"
-        }.newTable,
+        }.newStringTable,
         articleFilter = retweetFilter,
+        interval = 9000,
     )
     timelines.add newTimeline(
-        "User", TwitterService, 1, article.toVNode, 9000,
-        container = basicSortedContainer()
+        "User", TwitterService, 1, article.toVNode,
+        container = basicSortedContainer(),
+        interval = 9000,
     )
 
     proc createDom(): VNode =
@@ -37,7 +41,6 @@ when defined(js):
 
     setRenderer createDom
 
-# TODO Add timeline filters
 # TODO Login
 # TODO Move timeline refresh cooldown to endpoint
     # TODO Interval should be endpoint level, if one subscriber asks for it, and every subscriber should be updated

@@ -1,8 +1,15 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, options
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, options, strtabs
 import timeline, ../article, ../service
 
-type PagedTimeline* = ref object of Timeline
+type
+    PageNum* = ref object of RootObj
+        value*: int
+    PagedTimeline* = ref object of Timeline
         loadedPages*: seq[int]
+
+proc newPageNum(value: int): PageNum =
+    result = new(PageNum)
+    result.value = value
 
 # TODO Overload Timeline constructor
 proc newPagedTimeline*(
@@ -11,7 +18,7 @@ proc newPagedTimeline*(
         endpointIndex: int,
         toVNode: ToVNodeProc,
         container: ArticlesContainer = basicContainer(),
-        options = newTable[string, string](),
+        options = newStringTable(),
         infiniteLoad = false,
         startPage = 0,
     ): PagedTimeline =
@@ -38,19 +45,19 @@ proc newPagedTimeline*(
 
     discard result.refresh(ignoreTime = true)
 
-proc getNextTopPage*(loadedPages: seq[int]): Option[int] =
+proc getNextTopPage*(loadedPages: seq[int]): Option[PageNum] =
     if loadedPages[0] == 0:
-        return none(int)
+        return none(PageNum)
     else:
-        return some(loadedPages[0] - 1)
+        return newPageNum(loadedPages[0] - 1).some
 
 #TODO Get current page and find first unloaded page from there
-proc getNextBottomPage*(loadedPages: seq[int]): Option[int] =
-    some(loadedPages[loadedPages.len - 1] + 1)
+proc getNextBottomPage*(loadedPages: seq[int]): Option[PageNum] =
+    newPageNum(loadedPages[loadedPages.len - 1] + 1).some
 
-proc getNextPage*(t: PagedTimeline, bottom: bool): Option[int] =
+proc getNextPage*(t: PagedTimeline, bottom: bool): Option[PageNum] =
     if t.loadedPages.len == 0:
-        return some(0)
+        return newPageNum(0).some
     elif bottom:
         t.loadedPages.getNextBottomPage()
     else:
@@ -70,8 +77,12 @@ method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.
     if pageNum.isNone:
         return
     
-    await self.service.refreshEndpoint(self.endpointIndex, bottom, self.options, pageNum.get())
-    self.loadedPages.add(pageNum.get())
+    var refreshOptions: RefreshOptions
+    refreshOptions["options"] = self.options
+    refreshOptions["pageNum"] = pageNum.get()
+
+    await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
+    self.loadedPages.add(pageNum.get().value)
 
     self.updateTime(bottom)
     let direction = if bottom:

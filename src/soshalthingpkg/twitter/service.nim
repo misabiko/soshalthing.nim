@@ -1,4 +1,4 @@
-import karax/[kdom], fetch, asyncjs, json, sequtils, options, tweet, tables
+import karax/[kdom], fetch, asyncjs, json, sequtils, options, tweet, tables, strtabs
 import ../service
 from ../article as ba import ArticleData, ArticleCollection
 
@@ -53,9 +53,9 @@ proc updatingRateLimits() {.async.} =
 proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")
 
-    return proc(bottom = false, options: TableRef[string, string], pageNum: int): Future[EndpointPayload] {.async.} =
+    return proc(bottom = false, options: RefreshOptions): Future[EndpointPayload] {.async.} =
         let localUrl = newUrl(url)
-        localUrl.searchParams.setParams(options)
+        localUrl.searchParams.setParams(options["options"].StringTableRef)
 
         let tweets = await fetch(localUrl.toString()).toJsonNode()
         let payload = handlePayload(tweets, bottom)
