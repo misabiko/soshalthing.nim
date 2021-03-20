@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom, strtabs
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom, strtabs, options
 import ../service, ../article, ../fontawesome
 
 type
@@ -12,7 +12,7 @@ type
         name*: string
         articles*: RSeq[string]
         serviceName*: string
-        toVNode*: ToVNodeProc
+        toVNode*, toModal*: ToVNodeProc
         endpointIndex*: int
         options*: StringTableRef
         container*: ArticlesContainer
@@ -152,7 +152,7 @@ proc newTimeline*(
         name: string,
         serviceName: string,
         endpointIndex: int,
-        toVNode: ToVNodeProc,
+        toVNode, toModal: ToVNodeProc,
         container: ArticlesContainer = basicContainer(),
         options = newStringTable(),
         infiniteLoad = false,
@@ -167,6 +167,7 @@ proc newTimeline*(
         serviceName: serviceName,
         endpointIndex: endpointIndex,
         toVNode: toVNode,
+        toModal: toModal,
         options: options,
         container: container,
         infiniteLoad: infiniteLoad,
@@ -186,8 +187,6 @@ proc newTimeline*(
 
     if interval != 0:
         result.refreshInterval = window.setInterval(proc() = discard result.refresh(false), interval)
-    
-    discard result.refresh(ignoreTime = true)
 
 proc leftHeaderButtons*(self: var Timeline): seq[VNode] =
     discard
@@ -205,22 +204,27 @@ proc headerButtons*(self: var Timeline): seq[VNode] =
 
             proc onclick() = self.showOptions <- not self.showOptions.value
 
+proc articleModal*(self: Timeline, id: string): VNode = self.toModal(self, id)
+
+proc modal(t: Timeline): VNode =
+    let modalActivated = t.modalId.value.len > 0
+    buildHtml(tdiv(class = "modal" & (if modalActivated: " is-active" else: ""))):
+        tdiv(class = "modal-background")
+        tdiv(class = "modal-content"):
+            if modalActivated:
+                t.articleModal($t.modalId.value)
+        button(class = "modal-close is-large", `aria-label` = "close")
+
+        proc onclick() =
+            t.modalId <- ""
+
 proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self), lhButtons = leftHeaderButtons(self)): VNode =
     var headerClass = "timelineHeader"
     if not self.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
-    let modalActivated = self.modalId.value.len > 0
     buildHtml(section(class = class)):
-        tdiv(class = "modal" & (if modalActivated: " is-active" else: "")):
-            tdiv(class = "modal-background")
-            tdiv(class = "modal-content"):
-                if modalActivated:
-                    self.article($self.modalId.value)
-            button(class = "modal-close is-large", `aria-label` = "close")
-
-            proc onclick() =
-                self.modalId <- ""
+        self.modal()
         tdiv(class = headerClass):
             tdiv(class="timelineLeftHeader"):
                 strong: text self.name
@@ -238,6 +242,5 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
                     self.settingProc()
 
         self.container.toVNode(self.container, self)
-
 # TODO Clicking head button move individually
 # TODO Consider using StringTable for options

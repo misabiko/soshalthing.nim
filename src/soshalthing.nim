@@ -39,6 +39,8 @@ when defined(js):
                 for t in timelines.mitems:
                     t.timeline()
 
+    for t in timelines:
+        discard t.refresh(ignoreTime = true)
     setRenderer createDom
 
 # TODO Login

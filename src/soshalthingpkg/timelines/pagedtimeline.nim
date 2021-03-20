@@ -11,18 +11,31 @@ proc newPageNum(value: int): PageNum =
     result = new(PageNum)
     result.value = value
 
-# TODO Overload Timeline constructor
 proc newPagedTimeline*(
         name: string,
         serviceName: string,
         endpointIndex: int,
-        toVNode: ToVNodeProc,
+        toVNode, toModal: ToVNodeProc,
         container: ArticlesContainer = basicContainer(),
         options = newStringTable(),
         infiniteLoad = false,
-        startPage = 0,
+        articleFilter = proc(a: ArticleData): bool = true,
+        interval = 0,
         baseOptions = RefreshOptions(),
+        startPage = 0,
     ): PagedTimeline =
+    #[result = newTimeline(
+        name, serviceName,
+        endpointIndex,
+        toVNode,
+        toModal,
+        container,
+        options,
+        infiniteLoad,
+        articleFilter,
+        0,
+        baseOptions,
+    ).PagedTimeline]#
     let now = getTime()
     result = PagedTimeline(
         name: name,
@@ -30,6 +43,7 @@ proc newPagedTimeline*(
         serviceName: serviceName,
         endpointIndex: endpointIndex,
         toVNode: toVNode,
+        toModal: toModal,
         options: options,
         container: container,
         infiniteLoad: infiniteLoad,
@@ -39,14 +53,13 @@ proc newPagedTimeline*(
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
         modalId: "".rstr,
+        articleFilter: articleFilter,
         baseOptions: baseOptions,
     )
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     result.settings.add(articleClickSetting)
     result.settings.add(infiniteLoadSetting)
-
-    discard result.refresh(ignoreTime = true)
 
 proc getNextTopPage*(loadedPages: seq[int]): Option[PageNum] =
     if loadedPages[0] == 0:
@@ -76,6 +89,7 @@ method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.
         return
     self.updateTime(bottom, now)
 
+    echo "paged refresh"
     let pageNum = self.getNextPage(bottom)
     if pageNum.isNone:
         return
