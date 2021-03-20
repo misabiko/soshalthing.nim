@@ -80,9 +80,9 @@ proc newTwitterEndpoint(name, proxyEndpoint, fullEndpoint: string, limit, reset:
 
 let rateLimitInterval = window.setInterval(proc() = discard updatingRateLimits(), 60000)
 
-let TwitterService* = newService(@[
+addService("Twitter", newService(@[
     newTwitterEndpoint("Home Timeline", "home_timeline", "/statuses/home_timeline", 15, 1614570897),
     newTwitterEndpoint("User Media", "user_timeline", "/statuses/user_timeline", 900, 1614570897),
     newTwitterEndpoint("Search", "search", "/search/tweets", 180, 1614570897),
     newTwitterEndpoint("List", "list", "/lists/statuses", 900, 1614570897),
-])
+]))

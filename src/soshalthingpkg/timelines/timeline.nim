@@ -11,7 +11,7 @@ type
     Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
-        service*: ServiceInfo
+        serviceName*: string
         toVNode*: ToVNodeProc
         endpointIndex*: int
         options*: StringTableRef
@@ -24,8 +24,11 @@ type
         modalId*: RString
         refreshInterval*: ref Interval
         articleFilter*: proc(a: ArticleData): bool
+        baseOptions*: RefreshOptions
 
 let minRefreshDelay = initDuration(seconds = 1)
+
+proc service*(t: Timeline): ServiceInfo = services[t.serviceName]
 
 proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
@@ -83,6 +86,8 @@ method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base
     self.updateTime(bottom, now)
 
     var refreshOptions: RefreshOptions
+    for k, v in self.baseOptions.pairs:
+        refreshOptions[k] = v
     refreshOptions["options"] = self.options
     await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
 
@@ -134,7 +139,7 @@ proc articleClick*(t: Timeline, id: string) =
 
 proc newTimeline*(
         name: string,
-        service: ServiceInfo,
+        serviceName: string,
         endpointIndex: int,
         toVNode: ToVNodeProc,
         container: ArticlesContainer = basicContainer(),
@@ -142,12 +147,13 @@ proc newTimeline*(
         infiniteLoad = false,
         articleFilter = proc(a: ArticleData): bool = true,
         interval = 0,
+        baseOptions = RefreshOptions(),
     ): Timeline =
     let now = getTime()
     result = Timeline(
         name: name,
         articles: newRSeq[string](),
-        service: service,
+        serviceName: serviceName,
         endpointIndex: endpointIndex,
         toVNode: toVNode,
         options: options,
@@ -160,8 +166,9 @@ proc newTimeline*(
         showOptions: RBool(value: false),
         modalId: "".rstr,
         articleFilter: articleFilter,
+        baseOptions: baseOptions,
     )
-    service.endpoints[endpointIndex].subscribers.add(result.articles)
+    result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     result.settings.add(articleClickSetting)
 

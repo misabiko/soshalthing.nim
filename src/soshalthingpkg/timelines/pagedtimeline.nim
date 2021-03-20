@@ -14,19 +14,20 @@ proc newPageNum(value: int): PageNum =
 # TODO Overload Timeline constructor
 proc newPagedTimeline*(
         name: string,
-        service: ServiceInfo,
+        serviceName: string,
         endpointIndex: int,
         toVNode: ToVNodeProc,
         container: ArticlesContainer = basicContainer(),
         options = newStringTable(),
         infiniteLoad = false,
         startPage = 0,
+        baseOptions = RefreshOptions(),
     ): PagedTimeline =
     let now = getTime()
     result = PagedTimeline(
         name: name,
         articles: newRSeq[string](),
-        service: service,
+        serviceName: serviceName,
         endpointIndex: endpointIndex,
         toVNode: toVNode,
         options: options,
@@ -37,9 +38,10 @@ proc newPagedTimeline*(
         needBottom: RBool(value: false),
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
-        modalId: "".rstr
+        modalId: "".rstr,
+        baseOptions: baseOptions,
     )
-    service.endpoints[endpointIndex].subscribers.add(result.articles)
+    result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     result.settings.add(articleClickSetting)
 
@@ -78,6 +80,8 @@ method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.
         return
     
     var refreshOptions: RefreshOptions
+    for k, v in self.baseOptions.pairs:
+        refreshOptions[k] = v
     refreshOptions["options"] = self.options
     refreshOptions["pageNum"] = pageNum.get()
 

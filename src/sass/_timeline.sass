@@ -44,3 +44,12 @@
 .timelineOptions
 	background-color: $scheme-main-ter
 	padding: 1rem
+
+#timelineContainer
+	@include pretty-scrollbar
+
+	height: 100%
+	overflow-x: scroll
+	overflow-y: hidden
+	display: flex
+	flex-grow: 1

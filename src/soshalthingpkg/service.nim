@@ -15,6 +15,10 @@ type
         endpoints*: seq[EndpointInfo]
         articles*: ArticleCollection
 
+var services*: TableRef[string, ServiceInfo] = newTable[string, ServiceInfo]()
+
+proc addService*(name: string, service: ServiceInfo) = services[name] = service
+
 proc newService*(endpoints: seq[EndpointInfo]): ServiceInfo =
     return ServiceInfo(
         endpoints: endpoints,
@@ -24,22 +28,20 @@ proc newService*(endpoints: seq[EndpointInfo]): ServiceInfo =
 proc newEndpoint*(name: string, refresh: RefreshProc, isReady: proc(): bool): EndpointInfo =
     EndpointInfo(name: name, refreshProc: refresh, isReady: isReady)
 
-proc refresh*(e: EndpointInfo, bottom: bool, options: RefreshOptions): Future[EndpointPayload] {.async.} =
-    let payload = await e.refreshProc(bottom, options)
-    let direction = if bottom: "down" else: "up"
-    echo &"Refreshed {e.name} {direction} - {$payload.newArticles.len} articles"
-
-    for subscriberArticles in e.subscribers:
-        for articleId in payload.newArticles:
-            if articleId notin subscriberArticles:
-                subscriberArticles.add(articleId)
-
-    return payload
-
 proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: RefreshOptions) {.async.} =
-    let payload = await s.endpoints[index].refresh(bottom, options)
+    let payload = await s.endpoints[index].refreshProc(bottom, options)
+
+    let direction = if bottom: "down" else: "up"
+    echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
 
     for article in payload.articles:
         s.articles.update(article.id, article)
+
+    echo "Service has " & $s.articles.len & " articles"
+
+    for subscriberArticles in s.endpoints[index].subscribers:
+        for articleId in payload.newArticles:
+            if articleId notin subscriberArticles:
+                subscriberArticles.add(articleId)
 
     redraw()
