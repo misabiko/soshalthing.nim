@@ -44,6 +44,7 @@ proc newPagedTimeline*(
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     result.settings.add(articleClickSetting)
+    result.settings.add(infiniteLoadSetting)
 
     discard result.refresh(ignoreTime = true)
 

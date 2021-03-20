@@ -137,6 +137,17 @@ proc articleClick*(t: Timeline, id: string) =
         else:
             discard
 
+proc toChecked(checked: bool): cstring =
+    (if checked: cstring"checked" else: cstring(nil))
+
+proc infiniteLoadSetting*(t: Timeline): VNode =
+    buildHtml(label(class = "checkbox")):
+        input(`type` = "checkbox", checked = t.infiniteLoad.toChecked):
+            proc onclick(ev: Event; n: VNode) =
+                t.infiniteLoad = not t.infiniteLoad
+        
+        text "Infinite Load"
+
 proc newTimeline*(
         name: string,
         serviceName: string,
@@ -171,6 +182,7 @@ proc newTimeline*(
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
     result.settings.add(articleClickSetting)
+    result.settings.add(infiniteLoadSetting)
 
     if interval != 0:
         result.refreshInterval = window.setInterval(proc() = discard result.refresh(false), interval)
@@ -181,12 +193,6 @@ proc leftHeaderButtons*(self: var Timeline): seq[VNode] =
     discard
 
 proc headerButtons*(self: var Timeline): seq[VNode] =
-    result.add do:
-        buildHtml(button()):
-            icon("fa-infinity", size = "fa-lg")
-
-            proc onclick() = self.infiniteLoad = not self.infiniteLoad
-
     result.add do:
         buildHtml(button()):
             icon("fa-sync-alt", size = "fa-lg")
