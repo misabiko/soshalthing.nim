@@ -42,8 +42,9 @@ proc buttons(post: Post): VNode =
                 icon("fa-ellipsis-h")
 
 proc articleHeader(post: Post): VNode =
+    let href = "https://twitter.com/" & post.authorHandle
     buildHtml(tdiv(class="articleHeader")):
-        a(class="names"):
+        a(class="names", href=href, target="_blank", rel="noopener noreferrer"):
             strong: text post.authorName
             small: text "@" & post.authorHandle
         span(class="timestamp"):
