@@ -58,5 +58,5 @@ when defined(js):
 # TODO Serve css with right MIME
 # TODO Integrate serving to soshal
 # TODO Handle server not responding
-# TODO Get unit tests working on js
-    # https://nim-lang.org/docs/testament.html
+# TODO Use composition to standardize article like and share
+# TODO Toggle refresh logs

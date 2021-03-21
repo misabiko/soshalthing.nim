@@ -36,7 +36,23 @@ routes:
         let r = twitterAPI.statusesShow(parseInt(@"id"), {"tweet_mode": "extended"}.newStringTable)
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
 
+    post "/retweet/@id":
+        let id = parseInt(@"id")
+        let r = twitterAPI.statusesRetweet(id)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
 # application
     get "/ratelimit":
         let r = twitterAPI.applicationRateLimitData(rateLimitResources)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
+# favorites
+    post "/like/@id":
+        let id = parseInt(@"id")
+        let r = twitterAPI.favoritesCreate(id)
+        resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)
+
+    post "/unlike/@id":
+        let id = parseInt(@"id")
+        let r = twitterAPI.favoritesDestroy(id)
         resp(Http200, {"Access-Control-Allow-Origin":"*"}, r.body)

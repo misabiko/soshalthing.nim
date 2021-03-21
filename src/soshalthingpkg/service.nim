@@ -32,12 +32,13 @@ proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: Refresh
     let payload = await s.endpoints[index].refreshProc(bottom, options)
 
     let direction = if bottom: "down" else: "up"
-    echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
+    # TODO Toggle logs
+    # echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
 
     for article in payload.articles:
         s.articles.update(article.id, article)
 
-    echo "Service has " & $s.articles.len & " articles"
+    # echo "Service has " & $s.articles.len & " articles"
 
     for subscriberArticles in s.endpoints[index].subscribers:
         for articleId in payload.newArticles:

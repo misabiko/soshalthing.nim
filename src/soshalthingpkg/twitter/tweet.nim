@@ -1,4 +1,4 @@
-import json, options, times, sequtils, strutils
+import karax / reactive, json, options, times, sequtils, strutils
 import ../article
 
 type
@@ -9,10 +9,8 @@ type
         text*: string
         images*: seq[PostImageData]
         #video*: PostVideoData #Nullable
-        liked*: bool
-        reposted*: bool
-        likeCount*: int
-        repostCount*: int
+        liked*, reposted*: RBool
+        likeCount*, repostCount*: RInt
         #userMentions?*: UserMentionData[]
         #hashtags?*: HashtagData[]
         #externalLinks?*: ExternalLinkData[]
@@ -93,7 +91,7 @@ proc getText(tweet: JsonNode, entities: Entities): string =
 
     result = result.strip()
 
-proc toPost(tweet: JsonNode): Post =
+proc toPost*(tweet: JsonNode): Post =
     let user = tweet["user"]
     let entities = tweet.parseEntities()
 
@@ -106,10 +104,10 @@ proc toPost(tweet: JsonNode): Post =
         text: tweet.getText(entities),
         images: entities.images,
         #video,
-        liked: tweet["favorited"].bval,
-        reposted: tweet["retweeted"].bval,
-        likeCount: tweet["favorite_count"].num.int,
-        repostCount: tweet["retweet_count"].num.int,
+        liked: tweet["favorited"].bval.rbool,
+        reposted: tweet["retweeted"].bval.rbool,
+        likeCount: tweet["favorite_count"].num.int.rint,
+        repostCount: tweet["retweet_count"].num.int.rint,
         #userMentions,
         #hashtags,
         #externalLinks,
@@ -141,10 +139,10 @@ proc toQuote(tweet: JsonNode): Quote =
         text: tweet.getText(entities),
         #images,
         #video,
-        liked: tweet["favorited"].bval,
-        reposted: tweet["retweeted"].bval,
-        likeCount: tweet["favorite_count"].num.int,
-        repostCount: tweet["retweet_count"].num.int,
+        liked: tweet["favorited"].bval.rbool,
+        reposted: tweet["retweeted"].bval.rbool,
+        likeCount: tweet["favorite_count"].num.int.rint,
+        repostCount: tweet["retweet_count"].num.int.rint,
         #userMentions,
         #hashtags,
         #externalLinks,
@@ -170,3 +168,18 @@ proc parseTweet*(tweet: JsonNode): tuple[post: Post, repost: Option[Repost], quo
             none(Repost),
             none(Quote)
         )
+
+# TODO Find how to keep this synced with type def
+# TODO Also update directly with json
+method update*(baseData, newData: Post) =
+    update(baseData.ArticleData, newData.ArticleData)
+
+    baseData.authorName = newData.authorName
+    baseData.authorHandle = newData.authorHandle
+    baseData.authorAvatar = newData.authorAvatar
+    baseData.text = newData.text
+    baseData.images = newData.images
+    baseData.liked <- newData.liked.value
+    baseData.reposted <- newData.reposted.value
+    baseData.likeCount <- newData.likeCount.value
+    baseData.repostCount <- newData.repostCount.value

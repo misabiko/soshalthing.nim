@@ -23,15 +23,32 @@ proc printTweet(id: string) {.async.} =
     let tweet = await fetch("http://127.0.0.1:5000/status/" & id).toJsonNode()
     echo tweet
 
+proc retweet(post: Post) {.async.} =
+    let tweet = await fetchPost("http://127.0.0.1:5000/retweet/" & post.id).toJsonNode()
+    
+    post.update(tweet.toPost())
+
+proc like(post: Post) {.async.} =
+    let tweet = if post.liked.value:
+        await fetchPost("http://127.0.0.1:5000/unlike/" & post.id).toJsonNode()
+    else:
+        await fetchPost("http://127.0.0.1:5000/like/" & post.id).toJsonNode()
+    
+    post.update(tweet.toPost())
+
 proc buttons(post: Post): VNode =
     result = buildHtml(nav(class="level is-mobile")):
         tdiv(class="level-left"):
-            a(class = "level-item articleButton repostButton"):
+            a(class = "level-item articleButton repostButton" & (if post.reposted.value: " repostedPostButton" else: "")):
                 icon("fa-retweet")
-                span: text $post.repostCount
-            a(class = "level-item articleButton likeButton"):
-                icon("fa-heart", iconType = "far")
-                span: text $post.likeCount
+                span: text $post.repostCount.value
+
+                proc onclick() = discard post.retweet()
+            a(class = "level-item articleButton likeButton" & (if post.liked.value: " likedPostButton" else: "")):
+                icon("fa-heart", iconType = if post.liked.value: "fas" else: "far")
+                span: text $post.likeCount.value
+
+                proc onclick() = discard post.like()
             #if articlehasimages:
             #    a(class = "level-item articleButton compactOverrideButton"):
             #        icon("fa-expand")
