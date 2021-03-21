@@ -108,4 +108,6 @@ proc toVNode*(t: Timeline, id: string): VNode =
 
     return articleSkeleton(actualPost, data.getSuperHeader(), extra, footer)
 
+proc toModal*(t: TImeline, id: string): VNode = toVNode(t, id)
+
 #TODO Make tweet buttons button elements

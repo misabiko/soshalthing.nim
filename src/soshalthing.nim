@@ -5,19 +5,22 @@ when defined(js):
 
     var timelines: seq[Timeline]
     timelines.add newTimeline(
-        "Home", "Twitter", 0, article.toVNode,
+        "Home", "Twitter", 0,
+        article.toVNode, article.toModal,
         container = basicSortedContainer(),
         interval = 64285,
     )
     timelines.add newTimeline(
-        "Art", "Twitter", 3, article.toVNode,
+        "Art", "Twitter", 3,
+        article.toVNode, article.toModal,
         container = basicSortedContainer(),
         options = {"slug": "Art", "owner_screen_name": "misabiko"}.newStringTable,
         articleFilter = mediaFilter,
         interval = 9000,
     )
     timelines.add newTimeline(
-        "1draw", "Twitter", 2, article.toVNode,
+        "1draw", "Twitter", 2,
+        article.toVNode, article.toModal,
         container = basicSortedContainer(),
         options = {
             "q": "-filter:retweets #深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き",
@@ -27,7 +30,8 @@ when defined(js):
         interval = 9000,
     )
     timelines.add newTimeline(
-        "User", "Twitter", 1, article.toVNode,
+        "User", "Twitter", 1,
+        article.toVNode, article.toModal,
         container = basicSortedContainer(),
         interval = 9000,
     )
