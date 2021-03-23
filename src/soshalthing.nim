@@ -1,6 +1,6 @@
 when defined(js):
     import karax/[karax, vdom, karaxdsl], dom, strtabs
-    import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
+    import soshalthingpkg / [timelines/timeline, timelines/containers/basicContainer, sidebar/sidebar]
     import soshalthingpkg / [twitter/service, twitter/article]
 
     var timelines: seq[Timeline]
@@ -48,9 +48,6 @@ when defined(js):
     setRenderer createDom
 
 # TODO Login
-# TODO Move timeline refresh cooldown to endpoint
-    # TODO Interval should be endpoint level, if one subscriber asks for it, and every subscriber should be updated
-    # TODO If you have two timelines using the same endpoint and refresh one, both should update
 # TODO Move timelines to json file
 # TODO Switch container
     # TODO Bring masonry in soshal

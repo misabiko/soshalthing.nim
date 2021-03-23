@@ -1,13 +1,13 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, strutils, dom, strtabs, options
+import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, strutils, dom, strtabs, options
 import ../service, ../article, ../fontawesome
 
 type
     TimelineProc* = proc(t: Timeline): VNode
-    ArticlesContainer* = ref object of RootObj
-        toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
     ToVNodeProc* = proc(t: Timeline, id: string): VNode
     OnArticleClick {.pure.} = enum
         Hide, Expand, Like, Nothing
+    ArticlesContainer* = ref object of RootObj
+        toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
     Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
@@ -26,10 +26,13 @@ type
         articleFilter*: proc(a: ArticleData): bool
         baseOptions*: RefreshOptions
 
+var articlesContainers*: seq[ArticlesContainer]
+
 let minRefreshDelay = initDuration(seconds = 1)
 
 proc service*(t: Timeline): ServiceInfo = services[t.serviceName]
 
+# TODO Get rid of Timeline.article()
 proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
 
 proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
@@ -38,26 +41,6 @@ proc filteredArticles*(t: Timeline): seq[string] =
     for i in 0..<len(t.articles):
         if t.articleFilter(t.service.articles[t.articles[i]]):
             result.add(t.articles[i])
-
-proc basicContainer*(): ArticlesContainer =
-    let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
-        # TODO Use filteredArticles
-        vmap(t.articles, tdiv(class="timelineArticles"), t.article)
-
-    ArticlesContainer(toVNode: toVNode)
-
-proc basicSortedContainer*(): ArticlesContainer =
-    let toVNode = proc(self: ArticlesContainer, t: var Timeline): VNode =
-        let filtered = t.filteredArticles()
-        var copy: seq[string]
-        for id in filtered:
-            copy.add(id)
-        copy.sort(proc(x, y: string): int = cmp(t.service.articles[y].creationTime, t.service.articles[x].creationTime))
-        result = buildHtml(tdiv(class="timelineArticles")):
-            for i in copy:
-                t.article i
-
-    ArticlesContainer(toVNode: toVNode)
 
 proc isRefreshingTooFast*(self: Timeline, bottom: bool, now = getTime()): bool =
     if bottom:
@@ -153,7 +136,7 @@ proc newTimeline*(
         serviceName: string,
         endpointIndex: int,
         toVNode, toModal: ToVNodeProc,
-        container: ArticlesContainer = basicContainer(),
+        container: ArticlesContainer = articlesContainers[0],
         options = newStringTable(),
         infiniteLoad = false,
         articleFilter = proc(a: ArticleData): bool = true,
