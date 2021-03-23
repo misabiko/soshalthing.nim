@@ -4,6 +4,7 @@ type
     EndpointPayload* = object
         articles*: seq[ArticleData]
         newArticles*: seq[string]
+        doneBottom*, doneTop*: bool
     RefreshOptions* = Table[string, RootRef]
     RefreshProc* = proc(bottom: bool, options: RefreshOptions): Future[EndpointPayload]
     EndpointInfo* = ref object of RootObj
@@ -28,17 +29,17 @@ proc newService*(endpoints: seq[EndpointInfo]): ServiceInfo =
 proc newEndpoint*(name: string, refresh: RefreshProc, isReady: proc(): bool): EndpointInfo =
     EndpointInfo(name: name, refreshProc: refresh, isReady: isReady)
 
-proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: RefreshOptions) {.async.} =
+proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: RefreshOptions): Future[EndpointPayload] {.async.} =
     let payload = await s.endpoints[index].refreshProc(bottom, options)
 
     let direction = if bottom: "down" else: "up"
     # TODO Toggle logs
-    # echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
+    echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
 
     for article in payload.articles:
         s.articles.update(article.id, article)
 
-    # echo "Service has " & $s.articles.len & " articles"
+    echo "Service has " & $s.articles.len & " articles"
 
     for subscriberArticles in s.endpoints[index].subscribers:
         for articleId in payload.newArticles:
@@ -46,3 +47,5 @@ proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: Refresh
                 subscriberArticles.add(articleId)
 
     redraw()
+
+    return payload

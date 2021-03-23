@@ -86,6 +86,12 @@ method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.
         return
     self.updateTime(bottom, now)
 
+    if bottom:
+        if self.doneBottom:
+            return
+    elif self.doneTop:
+        return
+
     echo "paged refresh"
     let pageNum = self.getNextPage(bottom)
     if pageNum.isNone:
@@ -97,8 +103,15 @@ method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.
     refreshOptions["options"] = self.options
     refreshOptions["pageNum"] = pageNum.get()
 
-    await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
+    let payload = await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
     self.loadedPages.add(pageNum.get().value)
+
+    if payload.doneBottom:
+        echo self.name & " done with bottom"
+        self.doneBottom = true
+    if payload.doneTop:
+        echo self.name & " done with top"
+        self.doneTop = true
 
     self.updateTime(bottom)
     let direction = if bottom:

@@ -82,8 +82,7 @@ proc masonry*(nodes: openArray[(VNode, float)], t: var Timeline, colNum = 5): VN
 proc masonryContainer*(colNum = 5): ArticlesContainer =
     let toVNode = proc (self: ArticlesContainer, t: var Timeline): VNode =
         let ds = collect(newSeq):
-            for i in 0..<t.articles.len:
-                let id = t.articles[i]
+            for id in t.filteredArticles:
                 let d = t.service.articles[id]
 
                 if d.size.isSome:

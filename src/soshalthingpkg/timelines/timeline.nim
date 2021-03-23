@@ -19,6 +19,7 @@ type
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
         needTop*, needBottom*, showHidden*, showOptions*: RBool
+        doneTop*, doneBottom*: bool
         onArticleClick*: OnArticleClick
         settings*: seq[TimelineProc]
         modalId*: RString
@@ -75,16 +76,29 @@ method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base
         return
     self.updateTime(bottom, now)
 
+    if bottom:
+        if self.doneBottom:
+            return
+    elif self.doneTop:
+        return
+
     var refreshOptions: RefreshOptions
     for k, v in self.baseOptions.pairs:
         refreshOptions[k] = v
     refreshOptions["options"] = self.options
-    await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
+    let payload = await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
+
+    if payload.doneBottom:
+        echo self.name & " done with bottom"
+        self.doneBottom = true
+    if payload.doneTop:
+        echo self.name & " done with top"
+        self.doneTop = true
 
     self.updateTime(bottom)
 
 proc refillTop*(self: var Timeline) {.async.} =
-    if self.loadingTop:
+    if self.loadingTop or self.doneTop:
         return
     
     self.loadingTop = true
@@ -94,7 +108,7 @@ proc refillTop*(self: var Timeline) {.async.} =
     self.loadingTop = false
 
 proc refillBottom*(self: var Timeline) {.async.} =
-    if self.loadingBottom:
+    if self.loadingBottom or self.doneBottom:
         return
     
     self.loadingBottom = true
