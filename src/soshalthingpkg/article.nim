@@ -1,13 +1,17 @@
-import karax / [vdom, reactive], times, tables
+import karax / reactive, times, tables, options
 
 type
     ArticleCollection* = OrderedTableRef[string, ArticleData]
+    ArticleSize* = object
+        width*, height*: RInt
     ArticleData* = ref object of RootObj
         id*: string
         creationTime*: DateTime
         hidden*: RBool
-    Article* = ref object of VNode
-        articleId*: string
+        size*: Option[ArticleSize]
+
+proc newArticleSize*(width, height: int): Option[ArticleSize] =
+    ArticleSize(width: width.rint, height: height.rint).some
 
 method update*(baseData, newData: ArticleData) {.base.} =
     baseData.creationTime = newData.creationTime

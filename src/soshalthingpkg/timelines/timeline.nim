@@ -23,7 +23,7 @@ type
         settings*: seq[TimelineProc]
         modalId*: RString
         refreshInterval*: ref Interval
-        articleFilter*: proc(a: ArticleData): bool
+        articleFilters*: seq[proc(a: ArticleData): bool]
         baseOptions*: RefreshOptions
 
 var articlesContainers*: seq[ArticlesContainer]
@@ -39,8 +39,15 @@ proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpo
 
 proc filteredArticles*(t: Timeline): seq[string] =
     for i in 0..<len(t.articles):
-        if t.articleFilter(t.service.articles[t.articles[i]]):
-            result.add(t.articles[i])
+        let id = t.articles[i]
+        if not t.showHidden.value and t.service.articles[id].hidden.value:
+            continue
+        block innerloop:
+            for filter in t.articleFilters:
+                if not filter(t.service.articles[id]):
+                    break innerloop
+                
+            result.add(id)
 
 proc isRefreshingTooFast*(self: Timeline, bottom: bool, now = getTime()): bool =
     if bottom:
@@ -139,7 +146,6 @@ proc newTimeline*(
         container: ArticlesContainer = articlesContainers[0],
         options = newStringTable(),
         infiniteLoad = false,
-        articleFilter = proc(a: ArticleData): bool = true,
         interval = 0,
         baseOptions = RefreshOptions(),
     ): Timeline =
@@ -160,7 +166,6 @@ proc newTimeline*(
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
         modalId: "".rstr,
-        articleFilter: articleFilter,
         baseOptions: baseOptions,
     )
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)

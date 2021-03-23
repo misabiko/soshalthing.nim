@@ -1,5 +1,5 @@
 import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, options, strtabs
-import timeline, ../article, ../service
+import timeline, ../article, ../service, containers/basicContainer
 
 type
     PageNum* = ref object of RootObj
@@ -19,7 +19,6 @@ proc newPagedTimeline*(
         container: ArticlesContainer = basicContainer(),
         options = newStringTable(),
         infiniteLoad = false,
-        articleFilter = proc(a: ArticleData): bool = true,
         interval = 0,
         baseOptions = RefreshOptions(),
         startPage = 0,
@@ -32,7 +31,6 @@ proc newPagedTimeline*(
         container,
         options,
         infiniteLoad,
-        articleFilter,
         0,
         baseOptions,
     ).PagedTimeline]#
@@ -53,7 +51,6 @@ proc newPagedTimeline*(
         showHidden: RBool(value: false),
         showOptions: RBool(value: false),
         modalId: "".rstr,
-        articleFilter: articleFilter,
         baseOptions: baseOptions,
     )
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)

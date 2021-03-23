@@ -15,9 +15,10 @@ when defined(js):
         article.toVNode, article.toModal,
         container = basicSortedContainer(),
         options = {"slug": "Art", "owner_screen_name": "misabiko"}.newStringTable,
-        articleFilter = mediaFilter,
         interval = 9000,
     )
+    #TODO Use invert index
+    timelines[timelines.len - 1].articleFilters.add mediaFilter
     timelines.add newTimeline(
         "1draw", "Twitter", 2,
         article.toVNode, article.toModal,
@@ -26,9 +27,9 @@ when defined(js):
             "q": "-filter:retweets #深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き",
             "result_type": "recent"
         }.newStringTable,
-        articleFilter = retweetFilter,
         interval = 9000,
     )
+    timelines[timelines.len - 1].articleFilters.add retweetFilter
     timelines.add newTimeline(
         "User", "Twitter", 1,
         article.toVNode, article.toModal,
@@ -50,8 +51,6 @@ when defined(js):
 # TODO Login
 # TODO Move timelines to json file
 # TODO Switch container
-    # TODO Bring masonry in soshal
-        # TODO Somehow add VNode width/height articles
 # TODO Serve css with right MIME
 # TODO Integrate serving to soshal
 # TODO Handle server not responding
