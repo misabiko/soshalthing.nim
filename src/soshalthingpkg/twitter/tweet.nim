@@ -98,6 +98,7 @@ proc toPost*(tweet: JsonNode): Post =
     result = Post(
         id: tweet["id_str"].str,
         creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        hidden: false.rbool,
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
@@ -120,6 +121,7 @@ proc toRepost(tweet: JsonNode): Repost =
     result = Repost(
         id: tweet["id_str"].str,
         creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        hidden: false.rbool,
         repostedId: tweet["retweeted_status"]["id_str"].str,
         reposterName: user["name"].str,
         reposterHandle: user["screen_name"].str,
@@ -133,6 +135,7 @@ proc toQuote(tweet: JsonNode): Quote =
     result = Quote(
         id: tweet["id_str"].str,
         creationTime: tweet["created_at"].str.parse(tweetTimeFormat),
+        hidden: false.rbool,
         authorName: user["name"].str,
         authorHandle: user["screen_name"].str,
         authorAvatar: user["profile_image_url_https"].str,
