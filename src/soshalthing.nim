@@ -45,7 +45,6 @@ when defined(js):
         discard t.refresh(ignoreTime = true)
     setRenderer createDom
 
-# TODO RBool → rbool
 # TODO Login
 # TODO Move timelines to json file
 # TODO Serve css with right MIME
