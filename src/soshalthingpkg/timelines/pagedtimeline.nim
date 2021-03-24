@@ -66,7 +66,7 @@ proc getNextTopPage*(loadedPages: seq[int]): Option[PageNum] =
 
 #TODO Get current page and find first unloaded page from there
 proc getNextBottomPage*(loadedPages: seq[int]): Option[PageNum] =
-    newPageNum(loadedPages[loadedPages.len - 1] + 1).some
+    newPageNum(loadedPages[^1] + 1).some
 
 proc getNextPage*(t: PagedTimeline, bottom: bool): Option[PageNum] =
     if t.loadedPages.len == 0:

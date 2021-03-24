@@ -16,8 +16,7 @@ when defined(js):
         options = {"slug": "Art", "owner_screen_name": "misabiko"}.newStringTable,
         interval = 9000,
     )
-    #TODO Use invert index
-    timelines[timelines.len - 1].articleFilters.add mediaFilter
+    timelines[^1].articleFilters.add mediaFilter
     timelines.add newTimeline(
         "1draw", "Twitter", 2,
         article.toVNode, article.toModal,
@@ -27,7 +26,7 @@ when defined(js):
         }.newStringTable,
         interval = 9000,
     )
-    timelines[timelines.len - 1].articleFilters.add retweetFilter
+    timelines[^1].articleFilters.add retweetFilter
     timelines.add newTimeline(
         "User", "Twitter", 1,
         article.toVNode, article.toModal,
