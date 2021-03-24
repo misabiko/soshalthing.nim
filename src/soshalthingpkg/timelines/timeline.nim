@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs
+import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs, options
 import ../service, ../article, ../fontawesome
 
 type
@@ -8,6 +8,7 @@ type
         Hide, Expand, Like, Nothing
     ArticlesContainer* = ref object of RootObj
         toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
+        setting*: Option[TimelineProc]
     Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
@@ -220,6 +221,9 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
         if self.showOptions.value:
             tdiv(class = "timelineOptions"):
                 for settingProc in self.settings:
+                    self.settingProc()
+                if container.setting.isSome:
+                    let settingProc = container.setting.get()
                     self.settingProc()
 
         container.toVNode(container, self)

@@ -95,6 +95,7 @@ proc masonryContainer*(colNum = 5): ArticlesContainer =
 
     MasonryContainer(
         toVNode: toVNode,
+        setting: some(masonrySettings.TimelineProc),
         colNum: RInt(value: colNum)
     ).ArticlesContainer
 
