@@ -2,7 +2,7 @@ import karax / [karaxdsl, vdom], algorithm, tables, times
 import ../timeline
 
 proc basicContainer*(): ArticlesContainer =
-    let vnode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+    let vnode = proc(c: ArticlesContainer, t: var Timeline): VNode =
         buildHtml(tdiv(class="timelineArticles")):
             for id in t.filteredArticles:
                 t.article id
@@ -12,7 +12,7 @@ proc basicContainer*(): ArticlesContainer =
 articlesContainers["Basic"] = basicContainer()
 
 proc basicSortedContainer*(): ArticlesContainer =
-    let vnode = proc(self: ArticlesContainer, t: var Timeline): VNode =
+    let vnode = proc(c: ArticlesContainer, t: var Timeline): VNode =
         var filtered = t.filteredArticles()
         filtered.sort(proc(x, y: string): int = cmp(t.service.articles[y].creationTime, t.service.articles[x].creationTime))
         

@@ -80,7 +80,7 @@ proc masonry*(nodes: openArray[(VNode, float)], t: var Timeline, colNum = 5): VN
                 for n in c: n[0]
 
 proc masonryContainer*(colNum = 5): ArticlesContainer =
-    let toVNode = proc (self: ArticlesContainer, t: var Timeline): VNode =
+    let toVNode = proc (c: ArticlesContainer, t: var Timeline): VNode =
         let ds = collect(newSeq):
             for id in t.filteredArticles:
                 let d = t.service.articles[id]
@@ -91,7 +91,7 @@ proc masonryContainer*(colNum = 5): ArticlesContainer =
                 else:
                     (t.article(d.id), 1.float)
         
-        result = ds.masonry(t, MasonryContainer(self).colNum.value)
+        result = ds.masonry(t, MasonryContainer(c).colNum.value)
 
     MasonryContainer(
         toVNode: toVNode,

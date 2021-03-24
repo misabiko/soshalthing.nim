@@ -76,44 +76,43 @@ proc getNextPage*(t: PagedTimeline, bottom: bool): Option[PageNum] =
     else:
         t.loadedPages.getNextTopPage()
 
-method refresh*(self: PagedTimeline, bottom = true, ignoreTime = false) {.async.} =
-    if not self.endpoint.isReady():
-        echo self.name & "'s endpoint is over limit."
+method refresh*(t: PagedTimeline, bottom = true, ignoreTime = false) {.async.} =
+    if not t.endpoint.isReady():
+        echo t.name & "'s endpoint is over limit."
         return
 
     let now = getTime()
-    if not ignoreTime and self.isRefreshingTooFast(bottom, now):
+    if not ignoreTime and t.isRefreshingTooFast(bottom, now):
         return
-    self.updateTime(bottom, now)
+    t.updateTime(bottom, now)
 
     if bottom:
-        if self.doneBottom:
+        if t.doneBottom:
             return
-    elif self.doneTop:
+    elif t.doneTop:
         return
 
-    echo "paged refresh"
-    let pageNum = self.getNextPage(bottom)
+    let pageNum = t.getNextPage(bottom)
     if pageNum.isNone:
         return
     
     var refreshOptions: RefreshOptions
-    for k, v in self.baseOptions.pairs:
+    for k, v in t.baseOptions.pairs:
         refreshOptions[k] = v
-    refreshOptions["options"] = self.options
+    refreshOptions["options"] = t.options
     refreshOptions["pageNum"] = pageNum.get()
 
-    let payload = await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
-    self.loadedPages.add(pageNum.get().value)
+    let payload = await t.service.refreshEndpoint(t.endpointIndex, bottom, refreshOptions)
+    t.loadedPages.add(pageNum.get().value)
 
     if payload.doneBottom:
-        echo self.name & " done with bottom"
-        self.doneBottom = true
+        echo t.name & " done with bottom"
+        t.doneBottom = true
     if payload.doneTop:
-        echo self.name & " done with top"
-        self.doneTop = true
+        echo t.name & " done with top"
+        t.doneTop = true
 
-    self.updateTime(bottom)
+    t.updateTime(bottom)
     let direction = if bottom:
         "bottom"
     else:

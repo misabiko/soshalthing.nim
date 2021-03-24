@@ -7,7 +7,7 @@ type
     OnArticleClick* {.pure.} = enum
         Hide, Expand, Like, Nothing
     ArticlesContainer* = ref object of RootObj
-        toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
+        toVNode*: proc(c: ArticlesContainer, t: var Timeline): VNode
         setting*: Option[TimelineProc]
     Timeline* = ref object of RootObj
         name*: string
@@ -38,9 +38,9 @@ let minRefreshDelay = initDuration(seconds = 1)
 proc service*(t: Timeline): ServiceInfo = services[t.serviceName]
 
 # TODO Get rid of Timeline.article()
-proc article*(self: Timeline, id: string): VNode = self.toVNode(self, id)
+proc article*(t: Timeline, id: string): VNode = t.toVNode(t, id)
 
-proc endpoint*(self: Timeline): EndpointInfo = self.service.endpoints[self.endpointIndex]
+proc endpoint*(t: Timeline): EndpointInfo = t.service.endpoints[t.endpointIndex]
 
 proc filteredArticles*(t: Timeline): seq[string] =
     for i in 0..<len(t.articles):
@@ -54,72 +54,72 @@ proc filteredArticles*(t: Timeline): seq[string] =
                 
             result.add(id)
 
-proc isRefreshingTooFast*(self: Timeline, bottom: bool, now = getTime()): bool =
+proc isRefreshingTooFast*(t: Timeline, bottom: bool, now = getTime()): bool =
     if bottom:
-        if now - self.lastBottomRefresh < minRefreshDelay:
+        if now - t.lastBottomRefresh < minRefreshDelay:
             return true
     else:
-        if now - self.lastTopRefresh < minRefreshDelay:
+        if now - t.lastTopRefresh < minRefreshDelay:
             return true
     
     false
 
-proc updateTime*(self: Timeline, bottom: bool, now = getTime()) =
+proc updateTime*(t: Timeline, bottom: bool, now = getTime()) =
     if bottom:
-        self.lastBottomRefresh = now
+        t.lastBottomRefresh = now
     else:
-        self.lastTopRefresh = now
+        t.lastTopRefresh = now
 
-method refresh*(self: Timeline, bottom = true, ignoreTime = false) {.async, base.} =
-    if not self.endpoint.isReady():
-        echo self.name & "'s endpoint is over limit."
+method refresh*(t: Timeline, bottom = true, ignoreTime = false) {.async, base.} =
+    if not t.endpoint.isReady():
+        echo t.name & "'s endpoint is over limit."
         return
 
     let now = getTime()
-    if not ignoreTime and self.isRefreshingTooFast(bottom, now):
+    if not ignoreTime and t.isRefreshingTooFast(bottom, now):
         return
-    self.updateTime(bottom, now)
+    t.updateTime(bottom, now)
 
     if bottom:
-        if self.doneBottom:
+        if t.doneBottom:
             return
-    elif self.doneTop:
+    elif t.doneTop:
         return
 
     var refreshOptions: RefreshOptions
-    for k, v in self.baseOptions.pairs:
+    for k, v in t.baseOptions.pairs:
         refreshOptions[k] = v
-    refreshOptions["options"] = self.options
-    let payload = await self.service.refreshEndpoint(self.endpointIndex, bottom, refreshOptions)
+    refreshOptions["options"] = t.options
+    let payload = await t.service.refreshEndpoint(t.endpointIndex, bottom, refreshOptions)
 
     if payload.doneBottom:
-        echo self.name & " done with bottom"
-        self.doneBottom = true
+        echo t.name & " done with bottom"
+        t.doneBottom = true
     if payload.doneTop:
-        echo self.name & " done with top"
-        self.doneTop = true
+        echo t.name & " done with top"
+        t.doneTop = true
 
-    self.updateTime(bottom)
+    t.updateTime(bottom)
 
-proc refillTop*(self: var Timeline) {.async.} =
-    if self.loadingTop or self.doneTop:
+proc refillTop*(t: var Timeline) {.async.} =
+    if t.loadingTop or t.doneTop:
         return
     
-    self.loadingTop = true
-    if not self.isRefreshingTooFast(false):
-        echo &"Refilling {self.name} top"
-        await self.refresh(false)
-    self.loadingTop = false
+    t.loadingTop = true
+    if not t.isRefreshingTooFast(false):
+        echo &"Refilling {t.name} top"
+        await t.refresh(false)
+    t.loadingTop = false
 
-proc refillBottom*(self: var Timeline) {.async.} =
-    if self.loadingBottom or self.doneBottom:
+proc refillBottom*(t: var Timeline) {.async.} =
+    if t.loadingBottom or t.doneBottom:
         return
     
-    self.loadingBottom = true
-    if not self.isRefreshingTooFast(true):
-        echo &"Refilling {self.name} bottom"
-        await self.refresh()
-    self.loadingBottom = false
+    t.loadingBottom = true
+    if not t.isRefreshingTooFast(true):
+        echo &"Refilling {t.name} bottom"
+        await t.refresh()
+    t.loadingBottom = false
 
 proc articleClick*(t: Timeline, id: string) =
     case t.onArticleClick:
@@ -168,23 +168,23 @@ proc newTimeline*(
     if interval != 0:
         result.refreshInterval = window.setInterval(proc() = discard result.refresh(false), interval)
 
-proc leftHeaderButtons*(self: var Timeline): seq[VNode] =
+proc leftHeaderButtons*(t: var Timeline): seq[VNode] =
     discard
 
-proc headerButtons*(self: var Timeline): seq[VNode] =
+proc headerButtons*(t: var Timeline): seq[VNode] =
     result.add do:
         buildHtml(button()):
             icon("fa-sync-alt", size = "fa-lg")
 
-            proc onclick() = discard self.refresh(ignoreTime = true)
+            proc onclick() = discard t.refresh(ignoreTime = true)
     
     result.add do:
         buildHtml(button()):
             icon("fa-ellipsis-v", size = "fa-lg")
 
-            proc onclick() = self.showOptions <- not self.showOptions.value
+            proc onclick() = t.showOptions <- not t.showOptions.value
 
-proc articleModal*(self: Timeline, id: string): VNode = self.toModal(self, id)
+proc articleModal*(t: Timeline, id: string): VNode = t.toModal(t, id)
 
 proc modal(t: Timeline): VNode =
     let modalActivated = t.modalId.value.len > 0
@@ -198,18 +198,18 @@ proc modal(t: Timeline): VNode =
         proc onclick() =
             t.modalId <- ""
 
-proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(self), lhButtons = leftHeaderButtons(self)): VNode =
+proc timeline*(t: var Timeline, class = "timeline", hButtons = headerButtons(t), lhButtons = leftHeaderButtons(t)): VNode =
     var headerClass = "timelineHeader"
-    if not self.endpoint.isReady():
+    if not t.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
-    let container = articlesContainers[self.container]
+    let container = articlesContainers[t.container]
 
     buildHtml(section(class = class)):
-        self.modal()
+        t.modal()
         tdiv(class = headerClass):
             tdiv(class="timelineLeftHeader"):
-                strong: text self.name
+                strong: text t.name
                 tdiv(class="timelineButtons"):
                     for b in lhButtons:
                         b
@@ -218,13 +218,13 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
                 for b in hButtons:
                     b
         
-        if self.showOptions.value:
+        if t.showOptions.value:
             tdiv(class = "timelineOptions"):
-                for settingProc in self.settings:
-                    self.settingProc()
+                for settingProc in t.settings:
+                    t.settingProc()
                 if container.setting.isSome:
                     let settingProc = container.setting.get()
-                    self.settingProc()
+                    t.settingProc()
 
-        container.toVNode(container, self)
+        container.toVNode(container, t)
 # TODO Clicking head button move individually
