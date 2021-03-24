@@ -7,8 +7,12 @@ type
     OnArticleClick* {.pure.} = enum
         Hide, Expand, Like, Nothing
     ArticlesContainer* = ref object of RootObj
+        name*: string
         toVNode*: proc(c: ArticlesContainer, t: var Timeline): VNode
         setting*: Option[TimelineProc]
+    ArticlesFilter* = ref object
+        filter*: proc(a: ArticleData): bool
+        setting*: TimelineProc
     Timeline* = ref object of RootObj
         name*: string
         articles*: RSeq[string]
@@ -25,7 +29,7 @@ type
         settings*: seq[TimelineProc]
         modalId*: RString
         refreshInterval*: ref Interval
-        articleFilters*: seq[proc(a: ArticleData): bool]
+        articleFilters*: seq[ArticlesFilter]
         baseOptions*: RefreshOptions
 
 var defaultContainer*: string
@@ -48,8 +52,8 @@ proc filteredArticles*(t: Timeline): seq[string] =
         if not t.showHidden.value and t.service.articles[id].hidden.value:
             continue
         block innerloop:
-            for filter in t.articleFilters:
-                if not filter(t.service.articles[id]):
+            for f in t.articleFilters:
+                if not f.filter(t.service.articles[id]):
                     break innerloop
                 
             result.add(id)
@@ -223,6 +227,14 @@ proc timeline*(t: var Timeline, class = "timeline", hButtons = headerButtons(t),
                 if t.container.setting.isSome:
                     let settingProc = t.container.setting.get()
                     t.settingProc()
+
+                ul(class="timelineFilters"):
+                    for i, f in t.articleFilters.pairs:
+                        li(id="articleFilter" & $i):
+                            f.setting(t)
+                            button:
+                                text "Remove"
+                                proc onclick() = t.articleFilters.delete i
 
         t.container.toVNode(t.container, t)
 # TODO Clicking head button move individually

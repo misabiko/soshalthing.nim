@@ -2,14 +2,8 @@ import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, str
 import timeline, ../article, ../service, containers/basicContainer
 
 type
-    PageNum* = ref object of RootObj
-        value*: int
     PagedTimeline* = ref object of Timeline
         loadedPages*: seq[int]
-
-proc newPageNum(value: int): PageNum =
-    result = new(PageNum)
-    result.value = value
 
 proc newPagedTimeline*(
         name: string,
@@ -57,20 +51,22 @@ proc newPagedTimeline*(
 
     for setting in defaultSettings:
         result.settings.add setting
+    
+    info $result.settings.len
 
-proc getNextTopPage*(loadedPages: seq[int]): Option[PageNum] =
+proc getNextTopPage*(loadedPages: seq[int]): Option[RefreshOptionValue[int]] =
     if loadedPages[0] == 0:
-        return none(PageNum)
+        return none(RefreshOptionValue[int])
     else:
-        return newPageNum(loadedPages[0] - 1).some
+        return newROV[int](loadedPages[0] - 1).some
 
 #TODO Get current page and find first unloaded page from there
-proc getNextBottomPage*(loadedPages: seq[int]): Option[PageNum] =
-    newPageNum(loadedPages[^1] + 1).some
+proc getNextBottomPage*(loadedPages: seq[int]): Option[RefreshOptionValue[int]] =
+    newROV[int](loadedPages[^1] + 1).some
 
-proc getNextPage*(t: PagedTimeline, bottom: bool): Option[PageNum] =
+proc getNextPage*(t: PagedTimeline, bottom: bool): Option[RefreshOptionValue[int]] =
     if t.loadedPages.len == 0:
-        return newPageNum(0).some
+        return newROV[int](0).some
     elif bottom:
         t.loadedPages.getNextBottomPage()
     else:

@@ -1,6 +1,8 @@
 import karax / [karax, karaxdsl, vdom, reactive], strutils, dom, tables
 import timeline
 
+{.used.}
+
 proc articleClickSetting*(t: Timeline): VNode =
     buildHtml(tdiv(class = "select")):
         select(min = $ord(low(OnArticleClick)), max = $ord(high(OnArticleClick))):
@@ -28,7 +30,7 @@ proc containerSetting*(t: Timeline): VNode =
     buildHtml(tdiv(class = "select")):
         select:
             for name in articlesContainers.keys:
-                let selected = if t.container == name:
+                let selected = if t.container.name == name:
                     cstring"selected"
                 else:
                     cstring(nil)

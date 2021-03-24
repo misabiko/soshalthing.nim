@@ -5,6 +5,8 @@ type
         articles*: seq[ArticleData]
         newArticles*: seq[string]
         doneBottom*, doneTop*: bool
+    RefreshOptionValue*[T] = ref object of RootObj
+        value*: T
     RefreshOptions* = Table[string, RootRef]
     RefreshProc* = proc(bottom: bool, options: RefreshOptions): Future[EndpointPayload]
     EndpointInfo* = ref object of RootObj
@@ -12,11 +14,15 @@ type
         refreshProc*: RefreshProc #TODO Make private
         isReady*: proc(): bool
         subscribers*: seq[RSeq[string]]
-    ServiceInfo* = ref object
+    ServiceInfo* = ref object of RootObj
         endpoints*: seq[EndpointInfo]
         articles*: ArticleCollection
 
 var services*: TableRef[string, ServiceInfo] = newTable[string, ServiceInfo]()
+
+proc newROV*[T](value: T): RefreshOptionValue[T] =
+    result = new(RefreshOptionValue[T])
+    result.value = value
 
 proc addService*(name: string, service: ServiceInfo) = services[name] = service
 

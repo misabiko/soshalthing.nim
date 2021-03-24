@@ -106,6 +106,7 @@ proc masonryContainer*(): ArticlesContainer =
                     for n in c: n[0]
 
     MasonryContainer(
+        name: "Masonry",
         toVNode: toVNode,
         setting: some(masonrySettings.TimelineProc),
         colNum: 3.rint,

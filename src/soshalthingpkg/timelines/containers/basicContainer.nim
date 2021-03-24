@@ -7,7 +7,7 @@ proc basicContainer*(): ArticlesContainer =
             for id in t.filteredArticles:
                 t.article id
 
-    ArticlesContainer(toVNode: vnode)
+    ArticlesContainer(name: "Basic", toVNode: vnode)
 
 articlesContainers["Basic"] = basicContainer
 
@@ -20,7 +20,7 @@ proc basicSortedContainer*(): ArticlesContainer =
             for i in filtered:
                 t.article i
 
-    ArticlesContainer(toVNode: vnode)
+    ArticlesContainer(name: "Basic Sorted", toVNode: vnode)
 
 articlesContainers["Basic Sorted"] = basicSortedContainer
 defaultContainer = "Basic Sorted"
