@@ -16,9 +16,6 @@ proc articleClickSetting*(t: Timeline): VNode =
                 let value = parseInt($ev.target.value)
                 t.onArticleClick = OnArticleClick(value)
 
-proc toChecked(checked: bool): cstring =
-    (if checked: cstring"checked" else: cstring(nil))
-
 proc infiniteLoadSetting*(t: Timeline): VNode =
     buildHtml(label(class = "checkbox")):
         input(`type` = "checkbox", checked = t.infiniteLoad.toChecked):
