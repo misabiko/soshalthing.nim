@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, options, strtabs
+import karax / [karax, karaxdsl, vdom, reactive], algorithm, times, asyncjs, strformat, tables, options, strtabs, logging
 import timeline, ../article, ../service, containers/basicContainer
 
 type
@@ -78,7 +78,7 @@ proc getNextPage*(t: PagedTimeline, bottom: bool): Option[PageNum] =
 
 method refresh*(t: PagedTimeline, bottom = true, ignoreTime = false) {.async.} =
     if not t.endpoint.isReady():
-        echo t.name & "'s endpoint is over limit."
+        notice(t.name & "'s endpoint is over limit.")
         return
 
     let now = getTime()
@@ -106,10 +106,10 @@ method refresh*(t: PagedTimeline, bottom = true, ignoreTime = false) {.async.} =
     t.loadedPages.add(pageNum.get().value)
 
     if payload.doneBottom:
-        echo t.name & " done with bottom"
+        info(t.name & " done with bottom")
         t.doneBottom = true
     if payload.doneTop:
-        echo t.name & " done with top"
+        info(t.name & " done with top")
         t.doneTop = true
 
     t.updateTime(bottom)

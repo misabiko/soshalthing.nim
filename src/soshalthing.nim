@@ -1,8 +1,11 @@
 when defined(js):
-    import karax/[karax, vdom, karaxdsl], dom, strtabs
+    import karax/[karax, vdom, karaxdsl], dom, strtabs, logging
     import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
     import soshalthingpkg / timelines / [containers/basicContainer, containers/masonry, timelinesettings]
     import soshalthingpkg / [twitter/service, twitter/article]
+
+    var consoleLog = newConsoleLogger()
+    addHandler(consoleLog)
 
     var timelines: seq[Timeline]
     timelines.add newTimeline(
@@ -50,4 +53,3 @@ when defined(js):
 # TODO Integrate serving to soshal
 # TODO Handle server not responding
 # TODO Use composition to standardize article like and share
-# TODO Toggle refresh logs

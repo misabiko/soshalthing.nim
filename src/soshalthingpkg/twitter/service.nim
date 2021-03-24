@@ -1,4 +1,4 @@
-import karax/[kdom], fetch, asyncjs, json, sequtils, options, tweet, tables, strtabs
+import karax/[kdom], fetch, asyncjs, json, sequtils, options, tweet, tables, strtabs, logging
 import ../service
 from ../article as ba import ArticleData, ArticleCollection
 
@@ -48,7 +48,7 @@ proc updatingRateLimits() {.async.} =
                 rateLimits[endpoint].remaining = rate["remaining"].num.int
                 rateLimits[endpoint].reset = rate["reset"].num.int
     
-    echo "Refreshed rate limits..."
+    debug "Refreshed rate limits..."
 
 proc getRefreshProc(endpoint, fullEndpoint: string): RefreshProc =
     let url = newURL(endpoint, "http://127.0.0.1:5000/")

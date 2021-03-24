@@ -1,4 +1,4 @@
-import karax/[karax, reactive], asyncjs, article, tables, strformat
+import karax/[karax, reactive], asyncjs, article, tables, strformat, logging
 
 type
     EndpointPayload* = object
@@ -34,12 +34,12 @@ proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: Refresh
 
     let direction = if bottom: "down" else: "up"
     # TODO Toggle logs
-    echo &"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles"
+    debug(&"Refreshed {s.endpoints[index].name} {direction} - {$payload.newArticles.len} articles")
 
     for article in payload.articles:
         s.articles.update(article.id, article)
 
-    echo "Service has " & $s.articles.len & " articles"
+    debug("Service has " & $s.articles.len & " articles")
 
     for subscriberArticles in s.endpoints[index].subscribers:
         for articleId in payload.newArticles:

@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs, options
+import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs, options, logging
 import ../service, ../article, ../fontawesome
 
 type
@@ -72,7 +72,7 @@ proc updateTime*(t: Timeline, bottom: bool, now = getTime()) =
 
 method refresh*(t: Timeline, bottom = true, ignoreTime = false) {.async, base.} =
     if not t.endpoint.isReady():
-        echo t.name & "'s endpoint is over limit."
+        notice(t.name & "'s endpoint is over limit.")
         return
 
     let now = getTime()
@@ -93,10 +93,10 @@ method refresh*(t: Timeline, bottom = true, ignoreTime = false) {.async, base.} 
     let payload = await t.service.refreshEndpoint(t.endpointIndex, bottom, refreshOptions)
 
     if payload.doneBottom:
-        echo t.name & " done with bottom"
+        info(t.name & " done with bottom")
         t.doneBottom = true
     if payload.doneTop:
-        echo t.name & " done with top"
+        info(t.name & " done with top")
         t.doneTop = true
 
     t.updateTime(bottom)
@@ -107,7 +107,7 @@ proc refillTop*(t: var Timeline) {.async.} =
     
     t.loadingTop = true
     if not t.isRefreshingTooFast(false):
-        echo &"Refilling {t.name} top"
+        info(&"Refilling {t.name} top")
         await t.refresh(false)
     t.loadingTop = false
 
@@ -117,7 +117,7 @@ proc refillBottom*(t: var Timeline) {.async.} =
     
     t.loadingBottom = true
     if not t.isRefreshingTooFast(true):
-        echo &"Refilling {t.name} bottom"
+        info(&"Refilling {t.name} bottom")
         await t.refresh()
     t.loadingBottom = false
 

@@ -1,4 +1,4 @@
-import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options
+import karax/[karax, vdom, karaxdsl], tables, times, asyncjs, json, options, logging
 import ../article, ../timelines/timeline, tweet, fetch, ../fontawesome
 
 proc toTimestampStr(dt: DateTime): string =
@@ -54,7 +54,7 @@ proc buttons(post: Post): VNode =
             #        icon("fa-expand")
             a(class = "level-item articleButton articleMenuButton"):
                 proc onclick() =
-                    echo "menuclick!"
+                    info "menuclick!"
                     discard printTweet(post.id)
                 icon("fa-ellipsis-h")
 
