@@ -16,7 +16,7 @@ type
         toVNode*, toModal*: ToVNodeProc
         endpointIndex*: int
         options*: StringTableRef
-        container*: string
+        container*: ArticlesContainer
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
         needTop*, needBottom*, showHidden*, showOptions*: RBool
@@ -29,7 +29,7 @@ type
         baseOptions*: RefreshOptions
 
 var defaultContainer*: string
-var articlesContainers* = newTable[string, ArticlesContainer]()
+var articlesContainers* = newTable[string, proc(): ArticlesContainer]()
 
 var defaultSettings*: seq[TimelineProc]
 
@@ -150,7 +150,7 @@ proc newTimeline*(
         toVNode: toVNode,
         toModal: toModal,
         options: options,
-        container: container,
+        container: articlesContainers[container](),
         infiniteLoad: infiniteLoad,
         lastBottomRefresh: now,
         needTop: true.rbool,
@@ -203,8 +203,6 @@ proc timeline*(t: var Timeline, class = "timeline", hButtons = headerButtons(t),
     if not t.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
-    let container = articlesContainers[t.container]
-
     buildHtml(section(class = class)):
         t.modal()
         tdiv(class = headerClass):
@@ -222,9 +220,9 @@ proc timeline*(t: var Timeline, class = "timeline", hButtons = headerButtons(t),
             tdiv(class = "timelineOptions"):
                 for settingProc in t.settings:
                     t.settingProc()
-                if container.setting.isSome:
-                    let settingProc = container.setting.get()
+                if t.container.setting.isSome:
+                    let settingProc = t.container.setting.get()
                     t.settingProc()
 
-        container.toVNode(container, t)
+        t.container.toVNode(t.container, t)
 # TODO Clicking head button move individually

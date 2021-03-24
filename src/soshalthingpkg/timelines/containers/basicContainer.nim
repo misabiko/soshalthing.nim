@@ -9,7 +9,7 @@ proc basicContainer*(): ArticlesContainer =
 
     ArticlesContainer(toVNode: vnode)
 
-articlesContainers["Basic"] = basicContainer()
+articlesContainers["Basic"] = basicContainer
 
 proc basicSortedContainer*(): ArticlesContainer =
     let vnode = proc(c: ArticlesContainer, t: var Timeline): VNode =
@@ -22,5 +22,5 @@ proc basicSortedContainer*(): ArticlesContainer =
 
     ArticlesContainer(toVNode: vnode)
 
-articlesContainers["Basic Sorted"] = basicSortedContainer()
+articlesContainers["Basic Sorted"] = basicSortedContainer
 defaultContainer = "Basic Sorted"

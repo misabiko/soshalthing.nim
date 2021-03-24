@@ -10,7 +10,7 @@ type
         colNum*: RInt
 
 proc masonrySettings*(t: Timeline): VNode =
-    let container = articlesContainers[t.container].MasonryContainer
+    let container = t.container.MasonryContainer
     buildHtml():
         input(class = "input", `type` = "number", value = $container.colNum.value, min = "1"):
             proc onchange(ev: Event; n: VNode) =
@@ -79,7 +79,7 @@ proc masonry*(nodes: openArray[(VNode, float)], t: var Timeline, colNum = 5): VN
             tdiv(class="masonryColumn"):
                 for n in c: n[0]
 
-proc masonryContainer*(colNum = 5): ArticlesContainer =
+proc masonryContainer*(): ArticlesContainer =
     let toVNode = proc (c: ArticlesContainer, t: var Timeline): VNode =
         let ds = collect(newSeq):
             for id in t.filteredArticles:
@@ -96,7 +96,7 @@ proc masonryContainer*(colNum = 5): ArticlesContainer =
     MasonryContainer(
         toVNode: toVNode,
         setting: some(masonrySettings.TimelineProc),
-        colNum: colNum.rint
+        colNum: 3.rint
     ).ArticlesContainer
 
-articlesContainers["Masonry"] = masonryContainer()
+articlesContainers["Masonry"] = masonryContainer

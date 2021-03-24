@@ -1,7 +1,7 @@
 when defined(js):
     import karax/[karax, vdom, karaxdsl], dom, strtabs, logging
     import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
-    import soshalthingpkg / timelines / [containers/basicContainer, containers/masonry, timelinesettings]
+    import soshalthingpkg / timelines / [containers/prelude, timelinesettings]
     import soshalthingpkg / [twitter/service, twitter/article]
 
     var consoleLog = newConsoleLogger()

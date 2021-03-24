@@ -40,7 +40,7 @@ proc containerSetting*(t: Timeline): VNode =
                     text name
 
             proc onchange(ev: Event; n: VNode) =
-                t.container = $ev.target.value
+                t.container = articlesContainers[$ev.target.value]()
 
 defaultSettings.add articleClickSetting
 defaultSettings.add infiniteLoadSetting

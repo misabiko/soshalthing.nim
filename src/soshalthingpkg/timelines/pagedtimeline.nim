@@ -43,7 +43,7 @@ proc newPagedTimeline*(
         toVNode: toVNode,
         toModal: toModal,
         options: options,
-        container: container,
+        container: articlesContainers[container](),
         infiniteLoad: infiniteLoad,
         lastBottomRefresh: now,
         needTop: true.rbool,
