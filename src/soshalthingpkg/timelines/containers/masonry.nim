@@ -10,7 +10,7 @@ type
         colNum*: RInt
 
 proc masonrySettings*(t: Timeline): VNode =
-    let container = t.container.MasonryContainer
+    let container = articlesContainers[t.container].MasonryContainer
     buildHtml():
         input(class = "input", `type` = "number", value = $container.colNum.value, min = "1"):
             proc onchange(ev: Event; n: VNode) =
@@ -98,4 +98,4 @@ proc masonryContainer*(colNum = 5): ArticlesContainer =
         colNum: RInt(value: colNum)
     ).ArticlesContainer
 
-articlesContainers.add masonryContainer()
+articlesContainers["Masonry"] = masonryContainer()

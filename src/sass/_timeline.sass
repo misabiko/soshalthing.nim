@@ -5,7 +5,6 @@
 
 	color: $text
 	height: 100%
-	width: 500px
 	padding: 0 5px
 	box-sizing: border-box
 	display: flex
@@ -40,6 +39,7 @@
 	overflow-x: hidden
 	flex-grow: 1
 	height: 100%
+	width: 500px
 
 .timelineOptions
 	background-color: $scheme-main-ter
@@ -53,3 +53,18 @@
 	overflow-y: hidden
 	display: flex
 	flex-grow: 1
+
+.timelineArticles.timelineMasonry
+	display: flex
+	flex-wrap: nowrap
+	align-items: flex-start
+	align-content: flex-start
+	position: relative
+	width: fit-content
+
+.masonryColumn
+	flex: 1 1 0
+	width: 500px
+
+.masonryColumn img
+	width: 100%

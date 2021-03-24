@@ -16,7 +16,7 @@ proc newPagedTimeline*(
         serviceName: string,
         endpointIndex: int,
         toVNode, toModal: ToVNodeProc,
-        container: ArticlesContainer = basicContainer(),
+        container = defaultContainer,
         options = newStringTable(),
         infiniteLoad = false,
         interval = 0,
@@ -55,8 +55,8 @@ proc newPagedTimeline*(
     )
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
-    result.settings.add(articleClickSetting)
-    result.settings.add(infiniteLoadSetting)
+    for setting in defaultSettings:
+        result.settings.add setting
 
 proc getNextTopPage*(loadedPages: seq[int]): Option[PageNum] =
     if loadedPages[0] == 0:

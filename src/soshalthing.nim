@@ -1,19 +1,18 @@
 when defined(js):
     import karax/[karax, vdom, karaxdsl], dom, strtabs
-    import soshalthingpkg / [timelines/timeline, timelines/containers/basicContainer, sidebar/sidebar]
+    import soshalthingpkg / [timelines/timeline, sidebar/sidebar]
+    import soshalthingpkg / timelines / [containers/basicContainer, containers/masonry, timelinesettings]
     import soshalthingpkg / [twitter/service, twitter/article]
 
     var timelines: seq[Timeline]
     timelines.add newTimeline(
         "Home", "Twitter", 0,
         article.toVNode, article.toModal,
-        container = basicSortedContainer(),
         interval = 64285,
     )
     timelines.add newTimeline(
         "Art", "Twitter", 3,
         article.toVNode, article.toModal,
-        container = basicSortedContainer(),
         options = {"slug": "Art", "owner_screen_name": "misabiko"}.newStringTable,
         interval = 9000,
     )
@@ -22,7 +21,6 @@ when defined(js):
     timelines.add newTimeline(
         "1draw", "Twitter", 2,
         article.toVNode, article.toModal,
-        container = basicSortedContainer(),
         options = {
             "q": "-filter:retweets #深夜の真剣お絵描き60分一本勝負 OR #東方の90分お絵描き",
             "result_type": "recent"
@@ -33,7 +31,6 @@ when defined(js):
     timelines.add newTimeline(
         "User", "Twitter", 1,
         article.toVNode, article.toModal,
-        container = basicSortedContainer(),
         interval = 9000,
     )
 
@@ -48,9 +45,10 @@ when defined(js):
         discard t.refresh(ignoreTime = true)
     setRenderer createDom
 
+# TODO self → t
+# TODO RBool → rbool
 # TODO Login
 # TODO Move timelines to json file
-# TODO Switch container
 # TODO Serve css with right MIME
 # TODO Integrate serving to soshal
 # TODO Handle server not responding

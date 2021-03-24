@@ -1,10 +1,10 @@
-import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, strutils, dom, strtabs, options
+import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs
 import ../service, ../article, ../fontawesome
 
 type
     TimelineProc* = proc(t: Timeline): VNode
     ToVNodeProc* = proc(t: Timeline, id: string): VNode
-    OnArticleClick {.pure.} = enum
+    OnArticleClick* {.pure.} = enum
         Hide, Expand, Like, Nothing
     ArticlesContainer* = ref object of RootObj
         toVNode*: proc(self: ArticlesContainer, t: var Timeline): VNode
@@ -15,7 +15,7 @@ type
         toVNode*, toModal*: ToVNodeProc
         endpointIndex*: int
         options*: StringTableRef
-        container*: ArticlesContainer
+        container*: string
         lastBottomRefresh*, lastTopRefresh*: Time
         infiniteLoad*, loadingTop*, loadingBottom*: bool
         needTop*, needBottom*, showHidden*, showOptions*: RBool
@@ -27,7 +27,10 @@ type
         articleFilters*: seq[proc(a: ArticleData): bool]
         baseOptions*: RefreshOptions
 
-var articlesContainers*: seq[ArticlesContainer]
+var defaultContainer*: string
+var articlesContainers* = newTable[string, ArticlesContainer]()
+
+var defaultSettings*: seq[TimelineProc]
 
 let minRefreshDelay = initDuration(seconds = 1)
 
@@ -117,21 +120,6 @@ proc refillBottom*(self: var Timeline) {.async.} =
         await self.refresh()
     self.loadingBottom = false
 
-proc articleClickSetting*(t: Timeline): VNode =
-    buildHtml(tdiv(class = "select")):
-        select(min = $ord(low(OnArticleClick)), max = $ord(high(OnArticleClick))):
-            for clickAction in ord(low(OnArticleClick))..ord(high(OnArticleClick)):
-                let selected = if clickAction == ord(t.onArticleClick):
-                    cstring"selected"
-                else:
-                    cstring(nil)
-                option(value = $clickAction, selected = selected):
-                    text $OnArticleClick(clickAction)
-
-            proc onchange(ev: Event; n: VNode) =
-                let value = parseInt($ev.target.value)
-                t.onArticleClick = OnArticleClick(value)
-
 proc articleClick*(t: Timeline, id: string) =
     case t.onArticleClick:
         of Hide:
@@ -141,23 +129,12 @@ proc articleClick*(t: Timeline, id: string) =
         else:
             discard
 
-proc toChecked(checked: bool): cstring =
-    (if checked: cstring"checked" else: cstring(nil))
-
-proc infiniteLoadSetting*(t: Timeline): VNode =
-    buildHtml(label(class = "checkbox")):
-        input(`type` = "checkbox", checked = t.infiniteLoad.toChecked):
-            proc onclick(ev: Event; n: VNode) =
-                t.infiniteLoad = not t.infiniteLoad
-        
-        text "Infinite Load"
-
 proc newTimeline*(
         name: string,
         serviceName: string,
         endpointIndex: int,
         toVNode, toModal: ToVNodeProc,
-        container: ArticlesContainer = articlesContainers[0],
+        container = defaultContainer,
         options = newStringTable(),
         infiniteLoad = false,
         interval = 0,
@@ -184,8 +161,8 @@ proc newTimeline*(
     )
     result.service.endpoints[endpointIndex].subscribers.add(result.articles)
 
-    result.settings.add(articleClickSetting)
-    result.settings.add(infiniteLoadSetting)
+    for setting in defaultSettings:
+        result.settings.add setting
 
     if interval != 0:
         result.refreshInterval = window.setInterval(proc() = discard result.refresh(false), interval)
@@ -225,6 +202,8 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
     if not self.endpoint.isReady():
         headerClass &= " timelineInvalid"
 
+    let container = articlesContainers[self.container]
+
     buildHtml(section(class = class)):
         self.modal()
         tdiv(class = headerClass):
@@ -243,6 +222,5 @@ proc timeline*(self: var Timeline, class = "timeline", hButtons = headerButtons(
                 for settingProc in self.settings:
                     self.settingProc()
 
-        self.container.toVNode(self.container, self)
+        container.toVNode(container, self)
 # TODO Clicking head button move individually
-# TODO Consider using StringTable for options
