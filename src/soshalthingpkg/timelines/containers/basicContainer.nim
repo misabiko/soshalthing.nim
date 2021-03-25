@@ -1,6 +1,8 @@
 import karax / [karaxdsl, vdom], algorithm, tables, times
 import ../timeline
 
+{.used.}
+
 proc basicContainer*(): ArticlesContainer =
     let vnode = proc(c: ArticlesContainer, t: var Timeline): VNode =
         buildHtml(tdiv(class="timelineArticles")):

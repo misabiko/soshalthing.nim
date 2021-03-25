@@ -1,6 +1,8 @@
 import karax/[karax, karaxdsl, vdom, reactive], sequtils, sugar, algorithm, dom, strutils, tables, options
 import ../timeline
 
+{.used.}
+
 type
     WheelEvent* = ref WheelEventObj ## see `docs<https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent>`_
     WheelEventObj {.importc.} = object of Event

@@ -1,4 +1,4 @@
-import karax / [vdom, karaxdsl], json, strtabs, tables
+import karax / vdom, json, strtabs, tables
 import timeline
 import soshalthingpkg / [twitter/service, twitter/article]
 
