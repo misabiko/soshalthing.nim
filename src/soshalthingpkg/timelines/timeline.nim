@@ -1,4 +1,4 @@
-import karax / [karax, karaxdsl, vdom, reactive], times, asyncjs, strformat, tables, dom, strtabs, options, logging
+import karax / [karax, karaxdsl, vdom, reactive, localstorage], times, asyncjs, strformat, tables, dom, strtabs, options, logging, json
 import ../service, ../article, ../fontawesome
 
 type
@@ -125,10 +125,26 @@ proc refillBottom*(t: var Timeline) {.async.} =
         await t.refresh()
     t.loadingBottom = false
 
+proc updateHiddenLocalStorage(t: Timeline) =
+    var hiddens: seq[string] = if localstorage.hasItem("soshalHidden"):
+        parseJson($localstorage.getItem("soshalHidden")).to(seq[string])
+    else:
+        @[]
+
+    for id, a in t.service.articles.pairs:
+        if id in hiddens:
+            if not a.hidden.value:
+                hiddens.del(hiddens.find(id))
+        elif a.hidden.value:
+            hiddens.add id
+    
+    localstorage.setItem("soshalHidden", $(%* hiddens))
+
 proc articleClick*(t: Timeline, id: string) =
     case t.onArticleClick:
         of Hide:
             t.service.articles[id].hidden <- not t.service.articles[id].hidden.value
+            t.updateHiddenLocalStorage()
         of Expand:
             t.modalId <- id
         else:

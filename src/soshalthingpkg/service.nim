@@ -17,6 +17,7 @@ type
     ServiceInfo* = ref object of RootObj
         endpoints*: seq[EndpointInfo]
         articles*: ArticleCollection
+        postRefresh*: seq[proc(s: ServiceInfo)]
 
 var services*: TableRef[string, ServiceInfo] = newTable[string, ServiceInfo]()
 
@@ -53,5 +54,8 @@ proc refreshEndpoint*(s: ServiceInfo, index: int, bottom: bool, options: Refresh
                 subscriberArticles.add(articleId)
 
     redraw()
+
+    for postRefreshProc in s.postRefresh:
+        s.postRefreshProc()
 
     return payload
