@@ -88,7 +88,14 @@ method refresh*(t: PagedTimeline, bottom = true, ignoreTime = false) {.async.} =
     elif t.doneTop:
         return
 
-    let pageNum = t.getNextPage(bottom)
+
+    let pageNum = if "pageNumOverride" in t.baseOptions:
+        some(RefreshOptionValue[int](t.baseOptions["pageNumOverride"]))
+    else:
+        t.getNextPage(bottom)
+
+    t.baseOptions.del "pageNumOverride"
+
     if pageNum.isNone:
         return
     
